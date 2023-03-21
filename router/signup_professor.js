@@ -3,11 +3,11 @@ const router = express.Router();
 const db = require('../config/db');
 
 router.post('/', function(req, res) {
-    let student = req.body;
+    let professor = req.body;
     db.query(`insert into 
-    studenttable(id, password, name, school_name, major, email)
+    professortable(id, password, name, school_name, major, email)
     values(?,?,?,?,?,?);`,
-    [student.id,student.password,student.name,student.school_name,student.major,student.email], 
+    [professor.id,professor.password,professor.name,professor.school_name,professor.major,professor.email], 
     function(err, result, field){
         if(err) throw err;
         res.status(200);
@@ -16,9 +16,9 @@ router.post('/', function(req, res) {
 });
 
 router.post('/id_check', function(req, res) {
-    let student_id = req.body.id;
-    db.query('SELECT id FROM studenttable WHERE id = ?',
-    [student_id], function(err, result, field){
+    let professor_id = req.body.id;
+    db.query('SELECT id FROM professortable WHERE id = ?',
+    [professor_id], function(err, result, field){
         if(err) throw err;
         if(result.length > 0){
             res.status(409);

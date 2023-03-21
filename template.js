@@ -1,5 +1,5 @@
 module.exports = {
-    HTML:function(control1, control){
+    HTML:function(control){
       return `
       <!doctype html>
       <html>
@@ -7,7 +7,6 @@ module.exports = {
         <meta charset="utf-8">
       </head>
       <body>
-        ${control1}
         ${control}
       </body>
       </html>
