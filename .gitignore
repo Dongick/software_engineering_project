@@ -1,3 +1,2 @@
 config/
-.template.js
-.index.js
+.env
