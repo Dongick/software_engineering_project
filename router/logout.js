@@ -21,7 +21,7 @@ const router = express.Router();
  *        
  */
 
-router.get('/', function(req, res){
+router.get('/', (req, res) =>{
     res.cookie('accesstoken', '', {maxAge:0});
     res.sendStatus(200);
 })

@@ -26,18 +26,21 @@ const db = require('../config/db');
  *        
  */
 
-router.post('/id_check', function(req, res) {
-    let professor_id = req.body.id;
-    db.query('SELECT * FROM professortable WHERE id = ?',
-    [professor_id], function(err, result, field){
-        if(err) throw err;
+router.post('/id_check', async (req, res) =>{
+    try{
+        let professor_id = req.body.id;
+        const [result] = await db.promise().query(`SELECT * FROM professortable
+        WHERE id = ?`, [professor_id])
         if(result.length > 0){
             res.sendStatus(409);
         }
         else{
             res.sendStatus(200);
         }
-    })
+    }
+    catch(err){
+        throw err;
+    }
 });
 
 /**
@@ -79,16 +82,19 @@ router.post('/id_check', function(req, res) {
  *        description: 회원가입 성공
  */
 
-router.post('/', function(req, res) {
-    let professor = req.body;
-    db.query(`insert into 
-    professortable(id, password, name, school_name, major, email,phone_number, author)
-    values(?,?,?,?,?,?,?,?);`,
-    [professor.id,professor.password,professor.name,professor.school_name,professor.major,professor.email,professor.phone_number,2], 
-    function(err, result, field){
-        if(err) throw err;
+router.post('/', async (req, res) => {
+    try{
+        let professor = req.body;
+        const [result] = await db.promise().query(`insert into 
+        professortable(id, password, name, school_name, major, email,phone_number, author)
+        values(?,?,?,?,?,?,?,?);`,
+        [professor.id,professor.password,professor.name,professor.school_name,professor.major,professor.email,professor.phone_number,2], 
+        )
         res.sendStatus(200);
-    })
+    }
+    catch(err){
+        throw err;
+    }
 });
 
 module.exports = router;

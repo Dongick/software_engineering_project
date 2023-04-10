@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const jwt = require('../modules/jwt');
+const notice_function = require('../modules/notice_function')
+const multer = require('multer');
+const upload = multer();
 
 /**
  * @openapi
@@ -54,7 +57,7 @@ const jwt = require('../modules/jwt');
  *                  type: string
  *                  description: 파일이름
  *                file_data:
- *                  type: byte
+ *                  type: string
  *                  format: binary
  *                  description: 파일데이터
  *                writer:
@@ -115,66 +118,79 @@ const jwt = require('../modules/jwt');
  *        description: access 토큰 만료
  */
 
-router.get('/:subjectID/:semesterID/:noticeID', function(req, res) {
-    const token = jwt.verify(req.cookies['accesstoken']);
-    if (Number.isInteger(token)){
-        res.sendStatus(token);
-    } else{
-        let sub_code = req.params.subjectID;
-        let semester = req.params.semesterID;
-        let noticeid = req.params.noticeID - 1;
-        let userid = token.id;
-        if(token.author == 1){
-            db.query(`select n.id as id
-            from enrollment e join notice n
-            on e.sub_code = n.sub_code and e.semester = n.semester
-            where e.student_id = ? and e.semester = ? and e.sub_code = ?
-            order by n.id limit ?,1`,
-            [token.id, semester,sub_code,noticeid], function(err, result, field){
-                let notice_uniqueid = result[0].id;
-                db.query(`select * from notice_view where notice_id = ? and user_id = ?`,
-                [notice_uniqueid, userid], function(err, result2, field){
-                    if(result2.length > 0){
-                        db.query(`select sub_code,professor_name,title,content,file_name,file_data,writer,updated_time,view,semester
-                        from notice where id = ?`, [notice_uniqueid], function(err, result3, field){
-                            res.status(200).send(result3[0]);
-                        })
-                    }else{
-                        db.query(`update notice set view = view + 1 where id = ?`,[notice_uniqueid])
-                        db.query(`insert into notice_view(notice_id, user_id) values(?,?)`,[notice_uniqueid,userid])
-                        db.query(`select sub_code,professor_name,title,content,file_name,file_data,writer,updated_time,view,semester
-                        from notice where id = ?`, [notice_uniqueid], function(err, result3, field){
-                            res.status(200).send(result3[0]);
-                        })
-                    }
-                })
-            })
+router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
+    try{
+        const token = jwt.verify(req.cookies['accesstoken']);
+        if (Number.isInteger(token)){
+            res.sendStatus(token);
         } else{
-            db.query(`select id
-            from notice where professor_name = ? and semester = ? and sub_code = ?
-            order by id limit ?,1`,
-            [token.name, semester,sub_code,noticeid], function(err, result, field){
-                let notice_uniqueid = result[0].id;
-                db.query(`select * from notice_view where notice_id = ? and user_id = ?`,
-                [notice_uniqueid, userid], function(err, result2, field){
-                    if(result2.length > 0){
-                        db.query(`select sub_code,professor_name,title,content,file_name,file_data,writer,updated_time,view,semester
-                        from notice where id = ?`, [notice_uniqueid], function(err, result3, field){
-                            res.status(201).send(result3[0]);
-                        })
-                    }else{
-                        db.query(`update notice set view = view + 1 where id = ?`,[notice_uniqueid]);
-                        db.query(`insert into notice_view(notice_id, user_id) values(?,?)`,[notice_uniqueid,userid]);
-                        db.query(`select sub_code,professor_name,title,content,file_name,file_data,writer,updated_time,view,semester
-                        from notice where id = ?`, [notice_uniqueid], function(err, result3, field){
-                            res.status(201).send(result3[0]);
-                        })
+            const sub_code = req.params.subjectID;
+            const semester = req.params.semesterID;
+            const noticeid = req.params.noticeID - 1;
+            const userid = token.id;
+            if(token.author == 1){
+                const [result] = await db.promise().query(`select n.id as id
+                from enrollment e join notice n
+                on e.sub_code = n.sub_code and e.semester = n.semester
+                where e.student_id = ? and e.semester = ? and e.sub_code = ?
+                order by n.id limit ?,1`,[userid, semester,sub_code,noticeid])
+                const notice_uniqueid = result[0].id;
+                const result2 = await db.promise().query(`select * from notice_view where notice_id = ? and user_id = ?`,
+                [notice_uniqueid, userid])
+                if(result2[0].length > 0){
+                    const result3 = await notice_function.select_noticefile(notice_uniqueid);
+                    if(result3.length > 0){
+                        const file_info = result3.map(file => [file.file_name, file.file_data]);
+                        const result4 = await notice_function.select_notice(notice_uniqueid);
+                        const resultwithFile = {
+                        ...result4,
+                        file_name: file_info.map(file => file[0]),
+                        file_data: file_info.map(file => file[1])
+                        };
+                        res.status(200).send(resultwithFile);
+                    } else{
+                        const result4 = await notice_function.select_notice(notice_uniqueid);
+                        res.status(200).send(result4);
                     }
-                })
-            })
+                } else{
+                    db.promise().query(`update notice set view = view + 1 where id = ?`,[notice_uniqueid])
+                    db.promise().query(`insert into notice_view(notice_id, user_id) values(?,?)`,[notice_uniqueid,userid])
+                    const result3 = await notice_function.select_noticefile(notice_uniqueid);
+                    if(result3.length > 0){
+                        const file_info = result3.map(file => [file.file_name, file.file_data]);
+                        const result4 = await notice_function.select_notice(notice_uniqueid);
+                        const resultwithFile = {
+                        ...result4,
+                        file_name: file_info.map(file => file[0]),
+                        file_data: file_info.map(file => file[1])
+                        };
+                        res.status(200).send(resultwithFile);
+                    } else{
+                        const result4 = await notice_function.select_notice(notice_uniqueid);
+                        res.status(200).send(result4);
+                    }
+                }
+            } else{
+                const notice_uniqueid = await notice_function.select_noticeid(token.name, semester,sub_code,noticeid);
+                const result3 = await notice_function.select_noticefile(notice_uniqueid);
+                if(result3.length > 0){
+                    const file_info = result3.map(file => [file.file_name, file.file_data]);
+                    const result4 = await notice_function.select_notice(notice_uniqueid);
+                    const resultwithFile = {
+                    ...result4,
+                    file_name: file_info.map(file => file[0]),
+                    file_data: file_info.map(file => file[1])
+                    };
+                    res.status(201).send(resultwithFile);
+                } else{
+                    const result4 = await notice_function.select_notice(notice_uniqueid);
+                    res.status(201).send(result4);
+                }
+            }
         }
+    } catch(err){
+        throw err;
     }
-    
 });
 
 /**
@@ -283,7 +299,7 @@ router.get('/:subjectID/:semesterID/:noticeID', function(req, res) {
  *        description: access 토큰 만료
  */
 
-router.get('/:subjectID/:semesterID', function(req, res) {
+router.get('/:subjectID/:semesterID', async (req, res) => {
     const token = jwt.verify(req.cookies['accesstoken']);
     if (Number.isInteger(token)){
         res.sendStatus(token);
@@ -291,19 +307,17 @@ router.get('/:subjectID/:semesterID', function(req, res) {
         let sub_code = req.params.subjectID;
         let semester = req.params.semesterID;
         if(token.author == 1){
-            db.query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, n.created_time, n.view, n.semester
+            const [result] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, n.created_time, n.view, n.semester
             from enrollment e join notice n
             on e.sub_code = n.sub_code and e.semester = n.semester
             where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
-            [token.id, semester,sub_code], function(err, result, field){
-                res.status(200).send(result[0]);
-            })
+            [token.id, semester,sub_code])
+            res.status(200).send(result);
         } else{
-            db.query(`select id, sub_code, professor_name, title, writer, created_time, view, semester
+            const [result] = await db.promise().query(`select id, sub_code, professor_name, title, writer, created_time, view, semester
             from notice where professor_name = ? and semester = ? and sub_code = ? order by id`,
-            [token.name, semester,sub_code], function(err, result, field){
-                res.status(201).send(result[0]);
-            })
+            [token.name, semester,sub_code])
+            res.status(201).send(result);
         }
     }
 });
@@ -332,7 +346,7 @@ router.get('/:subjectID/:semesterID', function(req, res) {
  *    requestBody:
  *      required: true
  *      content:
- *        application/json:
+ *        multipart/form-data:
  *          schema:
  *            type: object
  *            properties:
@@ -342,13 +356,18 @@ router.get('/:subjectID/:semesterID', function(req, res) {
  *              content:
  *                type: string
  *                description: 본문
- *              file_name:
- *                type: string
- *                description: 파일이름
- *              file_data:
- *                type: byte
- *                format: binary
- *                description: 파일데이터
+ *              files:
+ *                type: array
+ *                items:
+ *                  type: string
+ *                  format: binay
+ *                  description: 파일데이터
+ *            required:
+ *              - title
+ *              - content
+ *          encoding:
+ *            files:
+ *              contentType: multipart/form-data
  *    responses:
  *      '200':
  *        description: 공지사항 생성 성공
@@ -358,7 +377,7 @@ router.get('/:subjectID/:semesterID', function(req, res) {
  *        description: access 토큰 만료
  */
 
-router.post('/:subjectID/:semesterID/create', function(req, res){
+router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req, res) =>{
     const token = jwt.verify(req.cookies['accesstoken']);
     if (Number.isInteger(token)){
         res.sendStatus(token);
@@ -367,12 +386,17 @@ router.post('/:subjectID/:semesterID/create', function(req, res){
         let semester = req.params.semesterID;
         let title = req.body.title;
         let content = req.body.content;
-        let file_name = req.body.file_name;
-        let file_data = req.body.file_data;
-        db.query(`insert into 
-        notice(sub_code,professor_name,title,content,file_name,file_data,writer,semester)
-        values(?,?,?,?,?,?,?,?);`,
-        [sub_code,token.name,title,content,file_name,file_data,token.name,semester])
+        let files = req.files;
+        await db.promise().query(`insert into 
+        notice(sub_code,professor_name,title,content,writer,semester)
+        values (?,?,?,?,?,?);`,
+        [sub_code,token.name,title,content,token.name,semester])
+        if(files){
+            const file_info = files.map(file => [file.originalname, file.buffer]);
+            const [result] = await db.promise().query(`select id from notice order by id desc limit 1;`,);
+            const notice_id = result[0].id
+            notice_function.insert_noticefile(notice_id, file_info);
+        }
         res.sendStatus(200);
     }
 })
@@ -417,13 +441,10 @@ router.post('/:subjectID/:semesterID/create', function(req, res){
  *              content:
  *                type: string
  *                description: 본문
- *              file_name:
+ *              files:
  *                type: string
- *                description: 파일이름
- *              file_data:
- *                type: byte
  *                format: binary
- *                description: 파일데이터
+ *                description: 파일
  *    responses:
  *      '200':
  *        description: 공지사항 수정 성공
@@ -433,7 +454,7 @@ router.post('/:subjectID/:semesterID/create', function(req, res){
  *        description: access 토큰 만료
  */
 
-router.post('/:subjectID/:semesterID/:noticeID/update', function(req, res){
+router.post('/:subjectID/:semesterID/:noticeID/update', async (req, res) =>{
     const token = jwt.verify(req.cookies['accesstoken']);
     if (Number.isInteger(token)){
         res.sendStatus(token);
@@ -443,14 +464,17 @@ router.post('/:subjectID/:semesterID/:noticeID/update', function(req, res){
         let noticeid = req.params.noticeID - 1;
         let title = req.body.title;
         let content = req.body.content;
-        let file_name = req.body.file_name;
-        let file_data = req.body.file_data;
-        db.query(`update notice set title=?, content=?, file_name=?, file_data=?
-        where id = (select id from
-        (select id from notice 
-        where professor_name=? and semester=? and sub_code = ?
-        order by id limit ?,1) tmp);`,
-        [title, content, file_name, file_data, token.name, semester, sub_code, noticeid])
+        let files = req.files;
+        const notice_id = await notice_function.select_noticeid(token.name, semester,sub_code,noticeid)
+        db.promise().query(`update notice set title=?, content=? where id=?`, [title, content, notice_id]);
+        const [result2] = await notice_function.select_noticefile(notice_id);
+        if(result2.length > 0){
+            await db.promise().query(`delete from notice_file where notice_id=?;`, [notice_id]);
+        }
+        if(files){
+            const file_info = files.map(file => [file.originalname, file.buffer]);
+            notice_function.insert_noticefile(notice_id, file_info);
+        }
         res.sendStatus(200);
     }
 })
@@ -491,7 +515,7 @@ router.post('/:subjectID/:semesterID/:noticeID/update', function(req, res){
  *        description: access 토큰 만료
  */
 
-router.get('/:subjectID/:semesterID/:noticeID/delete', function(req, res){
+router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
     const token = jwt.verify(req.cookies['accesstoken']);
     if (Number.isInteger(token)){
         res.sendStatus(token);
@@ -499,7 +523,7 @@ router.get('/:subjectID/:semesterID/:noticeID/delete', function(req, res){
         let sub_code = req.params.subjectID;
         let semester = req.params.semesterID;
         let noticeid = req.params.noticeID - 1;
-        db.query(`delete from notice where id = (select id from
+        db.promise().query(`delete from notice where id = (select id from
         (select id from notice 
         where professor_name=? and semester=? and sub_code = ?
         order by id limit ?,1) tmp);`,

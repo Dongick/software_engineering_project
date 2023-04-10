@@ -37,27 +37,27 @@ const jwt = require('../modules/jwt');
  *        description: 아이디 찾기 실패
  */
 
-router.post('/find_id', function(req, res){
-    let name = req.body.name;
-    let email = req.body.email;
-    db.query(`SELECT id FROM studenttable WHERE name = ? AND email = ?`,
-    [name,email], function(err, result, field){
-        if(err) throw err;
+router.post('/find_id', async (req, res) => {
+    try{
+        let name = req.body.name;
+        let email = req.body.email;
+        const [result] = await db.promise().query(`SELECT id FROM studenttable 
+        WHERE name = ? AND email = ?`,[name,email]);
         if(result.length > 0){
             res.status(200).send(result[0]);
-        }else{
-            db.query(`SELECT id FROM professortable WHERE name = ? AND email = ?`,
-            [name,email], function(err2, result2, field){
-                if(err2) throw err;
-                if(result2.length > 0){
-                    res.status(200).send(result2[0]);
-                }
-                else{
-                    res.sendStatus(401);
-                }
-            })
+        } else{
+            const [result2] = await db.promise().query(`SELECT id FROM professortable 
+            WHERE name = ? AND email = ?`, [name,email]);
+            console.log(result2[0]);
+            if(result2.length > 0){
+                res.status(200).send(result2[0]);
+            } else{
+                res.sendStatus(401);
+            }
         }
-    })
+    } catch (err) {
+        throw err;
+    }
 })
 
 /**
@@ -89,22 +89,23 @@ router.post('/find_id', function(req, res){
  *        description: 교수 비밀번호 변경 성공
  */
 
-router.post('/find_pw/change_pw', function(req, res){
-    let password = req.body.password;
-    let author = req.body.author;
-    let id = req.body.id;
-    if(author == 1){
-        db.query('update studenttable set password = ? where id=?',
-        [password, id], function(err, result, field){
-            if(err) throw err;
+router.post('/find_pw/change_pw', async (req, res) =>{
+    try{
+        let password = req.body.password;
+        let author = req.body.author;
+        let id = req.body.id;
+        if(author == 1){
+            const [result] = await db.promise().query(`update studenttable set password = ?
+            where id=?`,[password, id]);
             res.sendStatus(200);
-        })
-    }else{
-        db.query('update professortable set password = ? where id=?',
-        [password, id], function(err, result, field){
-            if(err) throw err;
+            
+        }else{
+            const [result2] = await db.promise().query(`update professortable set password = ?
+            where id=?`, [password, id])
             res.sendStatus(201);
-        })
+        }
+    } catch(err){
+        throw err;
     }
 })
 
@@ -137,27 +138,28 @@ router.post('/find_pw/change_pw', function(req, res){
  *        description: 비밀번호 찾기 실패
  */
 
-router.post('/find_pw', function(req, res){
-    let id = req.body.id;
-    let email = req.body.email;
-    db.query(`SELECT * FROM studenttable WHERE id = ? AND email = ?`,
-    [id,email], function(err, result, field){
-        if(err) throw err;
+router.post('/find_pw', async (req, res) =>{
+    try{
+        let id = req.body.id;
+        let email = req.body.email;
+        const [result] = await db.promise().query(`SELECT * FROM studenttable 
+        WHERE id = ? AND email = ?`, [id,email])
         if(result.length > 0){
             res.sendStatus(200);
         }else{
-            db.query(`select * from professortable where id = ? and email = ?`,
-            [id,email], function(err2, result2, field){
-                if(err2) throw err;
-                if(result2.length > 0){
-                    res.sendStatus(201);
-                }
-                else{
-                    res.sendStatus(401);
-                }
-            })
+            const [result2] = await db.promise().query(`select * from professortable 
+            where id = ? and email = ?`, [id,email])
+            if(result2.length > 0){
+                res.sendStatus(201);
+            }
+            else{
+                res.sendStatus(401);
+            }
         }
-    })
+    }
+    catch(err){
+        throw err;
+    }
 })
 
 /**
@@ -222,31 +224,32 @@ router.post('/find_pw', function(req, res){
  *        description: 로그인 실패
  */
 
-router.post('/', function(req, res) {
-    let id = req.body.id;
-    let password = req.body.password;
-    db.query(`SELECT id, name, author FROM studenttable WHERE id = ? AND password = ?`,
-    [id,password], function(err, result, field){
-        if(err) throw err;
+router.post('/', async (req, res) =>{
+    try{
+        let id = req.body.id;
+        let password = req.body.password;
+        const [result] = await db.promise().query(`SELECT id, name, author FROM studenttable
+        WHERE id = ? AND password = ?`, [id,password])
         if(result.length > 0){
             let accesstoken = jwt.sign(result);
             res.cookie('accesstoken', accesstoken);
             res.status(200).send(result[0]);
         }else{
-            db.query(`SELECT id, name, author FROM professortable WHERE id = ? AND password = ?`,
-            [id,password], function(err2, result2, field){
-                if(err2) throw err;
-                if(result2.length > 0){
-                    let accesstoken = jwt.sign(result2);
-                    res.cookie('accesstoken', accesstoken);
-                    res.status(201).send(result2[0]);
-                }
-                else{
-                    res.sendStatus(401);
-                }
-            })
+            const [result2] = await db.promise().query(`SELECT id, name, author FROM professortable
+            WHERE id = ? AND password = ?`, [id,password])
+            if(result2.length > 0){
+                let accesstoken = jwt.sign(result2);
+                res.cookie('accesstoken', accesstoken);
+                res.status(201).send(result2[0]);
+            }
+            else{
+                res.sendStatus(401);
+            }
         }
-    })
+    }
+    catch(err){
+        throw err;
+    }
 })
 
 module.exports = router;
