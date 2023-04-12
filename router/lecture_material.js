@@ -7,6 +7,64 @@ const multer = require('multer');
 const upload = multer();
 
 /**
+ * @openapi 
+ * /lecture_material/{subjectID}/{semesterID}/{lecture_materialID}/delete:
+ *  parameters:
+ *    - name: subjectID
+ *      in: path
+ *      required: true
+ *      description: 과목 코드
+ *      schema:
+ *        type: string
+ *    - name: semesterID
+ *      in: path
+ *      required: true
+ *      description: 년도-학기
+ *      schema:
+ *        type: string
+ *    - name: lecture_materialID
+ *      in: path
+ *      required: true
+ *      description: 강의자료실 번호
+ *      schema:
+ *        type: integer
+ *  get:
+ *    summary: 강의자료실 삭제
+ *    description: 강의자료실 삭제
+ *    security:
+ *      - CookieAuth: []
+ *    responses:
+ *      '200':
+ *        description: 강의자료실 삭제 성공
+ *      '401':
+ *        description: 잘못된 access 토큰
+ *      '419':
+ *        description: access 토큰 만료
+ */
+
+router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res) =>{
+    try{
+        const token = jwt.verify(req.cookies['accesstoken']);
+        if (Number.isInteger(token)){
+            res.sendStatus(token);
+        } else{
+            let sub_code = req.params.subjectID;
+            let semester = req.params.semesterID;
+            let lecture_materialid = req.params.lecture_materialID - 1;
+            db.promise().query(`delete from lecture_material where id = (select id from
+            (select id from lecture_material 
+            where professor_name=? and semester=? and sub_code = ?
+            order by id limit ?,1) tmp);`,
+            [token.name, semester, sub_code, lecture_materialid])
+            res.sendStatus(200);
+        }
+    }
+    catch(err){
+        throw err;
+    }
+})
+
+/**
  * @openapi
  * /lecture_material/{subjectID}/{semesterID}/{lecture_materialID}:
  *  parameters:
@@ -300,25 +358,30 @@ router.get('/:subjectID/:semesterID/:lecture_materialID', async (req, res) => {
  */
 
 router.get('/:subjectID/:semesterID', async (req, res) => {
-    const token = jwt.verify(req.cookies['accesstoken']);
-    if (Number.isInteger(token)){
-        res.sendStatus(token);
-    } else{
-        let sub_code = req.params.subjectID;
-        let semester = req.params.semesterID;
-        if(token.author == 1){
-            const [result] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, n.created_time, n.view, n.semester
-            from enrollment e join lecture_material n
-            on e.sub_code = n.sub_code and e.semester = n.semester
-            where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
-            [token.id, semester,sub_code])
-            res.status(200).send(result);
+    try{
+        const token = jwt.verify(req.cookies['accesstoken']);
+        if (Number.isInteger(token)){
+            res.sendStatus(token);
         } else{
-            const [result] = await db.promise().query(`select id, sub_code, professor_name, title, writer, created_time, view, semester
-            from lecture_material where professor_name = ? and semester = ? and sub_code = ? order by id`,
-            [token.name, semester,sub_code])
-            res.status(201).send(result);
+            let sub_code = req.params.subjectID;
+            let semester = req.params.semesterID;
+            if(token.author == 1){
+                const [result] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, n.created_time, n.view, n.semester
+                from enrollment e join lecture_material n
+                on e.sub_code = n.sub_code and e.semester = n.semester
+                where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
+                [token.id, semester,sub_code])
+                res.status(200).send(result);
+            } else{
+                const [result] = await db.promise().query(`select id, sub_code, professor_name, title, writer, created_time, view, semester
+                from lecture_material where professor_name = ? and semester = ? and sub_code = ? order by id`,
+                [token.name, semester,sub_code])
+                res.status(201).send(result);
+            }
         }
+    }
+    catch(err){
+        throw err;
     }
 });
 
@@ -378,26 +441,31 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  */
 
 router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req, res) =>{
-    const token = jwt.verify(req.cookies['accesstoken']);
-    if (Number.isInteger(token)){
-        res.sendStatus(token);
-    } else{
-        let sub_code = req.params.subjectID;
-        let semester = req.params.semesterID;
-        let title = req.body.title;
-        let content = req.body.content;
-        let files = req.files;
-        await db.promise().query(`insert into 
-        lecture_material(sub_code,professor_name,title,content,writer,semester)
-        values (?,?,?,?,?,?);`,
-        [sub_code,token.name,title,content,token.name,semester])
-        if(files){
-            const file_info = files.map(file => [file.originalname, file.buffer]);
-            const [result] = await db.promise().query(`select id from lecture_material order by id desc limit 1;`,);
-            const lecture_material_id = result[0].id
-            lecture_material_function.insert_lecture_materialfile(lecture_material_id, file_info);
+    try{
+        const token = jwt.verify(req.cookies['accesstoken']);
+        if (Number.isInteger(token)){
+            res.sendStatus(token);
+        } else{
+            let sub_code = req.params.subjectID;
+            let semester = req.params.semesterID;
+            let title = req.body.title;
+            let content = req.body.content;
+            let files = req.files;
+            await db.promise().query(`insert into 
+            lecture_material(sub_code,professor_name,title,content,writer,semester)
+            values (?,?,?,?,?,?);`,
+            [sub_code,token.name,title,content,token.name,semester])
+            if(files){
+                const file_info = files.map(file => [file.originalname, file.buffer]);
+                const [result] = await db.promise().query(`select id from lecture_material order by id desc limit 1;`,);
+                const lecture_material_id = result[0].id
+                lecture_material_function.insert_lecture_materialfile(lecture_material_id, file_info);
+            }
+            res.sendStatus(200);
         }
-        res.sendStatus(200);
+    }
+    catch(err){
+        throw err;
     }
 })
 
@@ -455,80 +523,32 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
  */
 
 router.post('/:subjectID/:semesterID/:lecture_materialID/update', async (req, res) =>{
-    const token = jwt.verify(req.cookies['accesstoken']);
-    if (Number.isInteger(token)){
-        res.sendStatus(token);
-    } else{
-        let sub_code = req.params.subjectID;
-        let semester = req.params.semesterID;
-        let lecture_materialid = req.params.lecture_materialID - 1;
-        let title = req.body.title;
-        let content = req.body.content;
-        let files = req.files;
-        const lecture_material_id = await lecture_material_function.select_lecture_materialid(token.name, semester,sub_code,lecture_materialid)
-        db.promise().query(`update lecture_material set title=?, content=? where id=?`, [title, content, lecture_material_id]);
-        const [result2] = await lecture_material_function.select_lecture_materialfile(lecture_material_id);
-        if(result2.length > 0){
-            await db.promise().query(`delete from lecture_material_file where lecture_material_id=?;`, [lecture_material_id]);
+    try{
+        const token = jwt.verify(req.cookies['accesstoken']);
+        if (Number.isInteger(token)){
+            res.sendStatus(token);
+        } else{
+            let sub_code = req.params.subjectID;
+            let semester = req.params.semesterID;
+            let lecture_materialid = req.params.lecture_materialID - 1;
+            let title = req.body.title;
+            let content = req.body.content;
+            let files = req.files;
+            const lecture_material_id = await lecture_material_function.select_lecture_materialid(token.name, semester,sub_code,lecture_materialid)
+            db.promise().query(`update lecture_material set title=?, content=? where id=?`, [title, content, lecture_material_id]);
+            const [result2] = await lecture_material_function.select_lecture_materialfile(lecture_material_id);
+            if(result2.length > 0){
+                await db.promise().query(`delete from lecture_material_file where lecture_material_id=?;`, [lecture_material_id]);
+            }
+            if(files){
+                const file_info = files.map(file => [file.originalname, file.buffer]);
+                lecture_material_function.insert_lecture_materialfile(lecture_material_id, file_info);
+            }
+            res.sendStatus(200);
         }
-        if(files){
-            const file_info = files.map(file => [file.originalname, file.buffer]);
-            lecture_material_function.insert_lecture_materialfile(lecture_material_id, file_info);
-        }
-        res.sendStatus(200);
     }
-})
-
-/**
- * @openapi 
- * /lecture_material/{subjectID}/{semesterID}/{lecture_materialID}/delete:
- *  parameters:
- *    - name: subjectID
- *      in: path
- *      required: true
- *      description: 과목 코드
- *      schema:
- *        type: string
- *    - name: semesterID
- *      in: path
- *      required: true
- *      description: 년도-학기
- *      schema:
- *        type: string
- *    - name: lecture_materialID
- *      in: path
- *      required: true
- *      description: 강의자료실 번호
- *      schema:
- *        type: integer
- *  get:
- *    summary: 강의자료실 삭제
- *    description: 강의자료실 삭제
- *    security:
- *      - CookieAuth: []
- *    responses:
- *      '200':
- *        description: 강의자료실 삭제 성공
- *      '401':
- *        description: 잘못된 access 토큰
- *      '419':
- *        description: access 토큰 만료
- */
-
-router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res) =>{
-    const token = jwt.verify(req.cookies['accesstoken']);
-    if (Number.isInteger(token)){
-        res.sendStatus(token);
-    } else{
-        let sub_code = req.params.subjectID;
-        let semester = req.params.semesterID;
-        let lecture_materialid = req.params.lecture_materialID - 1;
-        db.promise().query(`delete from lecture_material where id = (select id from
-        (select id from lecture_material 
-        where professor_name=? and semester=? and sub_code = ?
-        order by id limit ?,1) tmp);`,
-        [token.name, semester, sub_code, lecture_materialid])
-        res.sendStatus(200);
+    catch(err){
+        throw err;
     }
 })
 

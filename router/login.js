@@ -89,19 +89,17 @@ router.post('/find_id', async (req, res) => {
  *        description: 교수 비밀번호 변경 성공
  */
 
-router.post('/find_pw/change_pw', async (req, res) =>{
+router.post('/change_pw', async (req, res) =>{
     try{
         let password = req.body.password;
         let author = req.body.author;
         let id = req.body.id;
         if(author == 1){
-            const [result] = await db.promise().query(`update studenttable set password = ?
-            where id=?`,[password, id]);
+            db.promise().query(`update studenttable set password = ? where id=?`,[password, id]);
             res.sendStatus(200);
             
         }else{
-            const [result2] = await db.promise().query(`update professortable set password = ?
-            where id=?`, [password, id])
+            db.promise().query(`update professortable set password = ? where id=?`, [password, id])
             res.sendStatus(201);
         }
     } catch(err){
