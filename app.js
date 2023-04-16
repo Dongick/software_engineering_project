@@ -12,6 +12,7 @@ const noticeRouter = require('./router/notice');
 const syllabusRouter = require('./router/syllabus');
 const mainRouter = require('./router/main');
 const enrollmentRouter = require('./router/enrollment');
+const gradeRouter = require('./router/grade');
 
 const swaggerUi = require('swagger-ui-express');
 const specs = require('./swagger');
@@ -35,6 +36,7 @@ app.use('/logout', logoutRouter);
 app.use('/notice', noticeRouter);
 app.use('/syllabus', syllabusRouter);
 app.use('/enrollment', enrollmentRouter);
+app.use('/grade', gradeRouter);
 app.use('/', mainRouter);
 
 app.listen(port, () => {

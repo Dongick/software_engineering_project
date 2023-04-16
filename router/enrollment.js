@@ -144,11 +144,14 @@ router.post('/insert', async (req, res) =>{
             const [result] = await db.promise().query(`select remain_seat, credit, time from subject where sub_code = ? and semester = ?`, [sub_code, semester]);
             let[{remain_seat, credit, time}] = result;
             if(remain_seat > 0){
-                let [same_subject] = await db.promise().query(`select sub_code from enrollment where sub_code = ? and semester = ?`, [sub_code, semester]);
+                let [same_subject] = await db.promise().query(`select sub_code from enrollment where sub_code = ? and semester = ? and student_id = ?`, [sub_code, semester, token.id]);
                 if(same_subject.length == 0){
                     let [total_credit] = await db.promise().query(`select sum(s.credit) total_credit from subject s join enrollment e
                     on s.sub_code = e.sub_code and s.semester = e.semester where e.student_id = ? and s.semester = ?`, [token.id, semester]);
                     total_credit = parseInt(total_credit[0].total_credit);
+                    if(isNaN(total_credit)){
+                        total_credit = 0;
+                    }
                     if(total_credit + credit < 18){
                         let [times] = await db.promise().query(`select s.time from enrollment e join subject s on s.sub_code = e.sub_code and s.semester = e.semester
                         where e.student_id = ? and s.semester = ?`, [token.id, semester]);
