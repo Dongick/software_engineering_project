@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const jwt = require('../modules/jwt');
+const score_funciton = require('../modules/score_function');
 
 /**
  * @openapi
@@ -134,20 +135,25 @@ router.post('/:subjectID/:semesterID', async (req, res) => {
             const semester = req.params.semesterID;
             const student_id = req.body.student_id;
             const grades = req.body.grade;
-            const info = student_id.map((id, index) => {
-                return {
-                    grade: grades[index],
-                    sub_code: sub_code,
-                    semester: semester,
-                    id: id
-                };
-            });
-            const promise = info.map(({ grade, sub_code, semester, id }) =>{
-                return db.promise().query(`UPDATE enrollment SET grade = ? WHERE student_id = ? AND sub_code = ? AND semester = ?`, [grade, id, sub_code, semester]);
-            })
-            Promise.all(promise)
-                .then(() => console.log('성적이 업데이트되었습니다.'))
-                .catch((err) => console.error('업데이트 중 오류가 발생했습니다:', err));
+            for(let i = 0; i < student_id.length; i++){
+                db.promise().query(`UPDATE enrollment SET grade = ? WHERE student_id = ? AND sub_code = ? AND semester = ?`, [grades[i], student_id[i], sub_code, semester]);
+                let [result] = await db.promise().query(`select * from enrollment where student_id = ? and semester = ? and grade is null`, [student_id[i], semester]);
+                if(result.length == 0){
+                    let [score] = await db.promise().query(`select e.grade, sum(s.credit) sum_credit from enrollment e join subject s
+                    on e.sub_code = s.sub_code and e.semester = s.semester 
+                    where e.student_id = ? and s.semester = ?
+                    group by e.student_id, e.semester, e.grade`, [student_id[i], semester]);
+                    let totalCredit = score.reduce((acc, curr) => acc + parseInt(curr.sum_credit), 0);
+                    let totalGrade = score.reduce((acc, curr) => acc + score_funciton.convert_grade(curr.grade) * parseInt(curr.sum_credit), 0);
+                    let average_score = (totalGrade / totalCredit).toFixed(2);
+                    const [info] = await db.promise().query(`select * from score where student_id = ? and semester = ?`, [student_id[i], semester]);
+                    if(info.length > 0){
+                        db.promise().query(`update score set average_score = ? where student_id = ? and semester = ?`, [average_score, student_id[i], semester]);
+                    } else{
+                        db.promise().query(`insert into score(student_id, semester, average_score) values(?, ?, ?)`, [student_id[i], semester, average_score]);
+                    }
+                }
+            }
             return res.sendStatus(200);
         }
     }
