@@ -295,7 +295,6 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
                 '교재': {...textbook},
                 '강의 일정 및 내용':{...lec_schedule}
             };
-            console.log(total_result);
             const {id, ...result} = total_result;
             if(token.author == 1){
                 res.status(200).send(result);

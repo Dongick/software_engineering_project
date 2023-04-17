@@ -229,16 +229,18 @@ router.post('/', async (req, res) =>{
         const [result] = await db.promise().query(`SELECT id, name, author FROM studenttable
         WHERE id = ? AND password = ?`, [id,password])
         if(result.length > 0){
-            let accesstoken = jwt.sign(result);
+            const accesstoken = jwt.sign(result);
             res.cookie('accesstoken', accesstoken);
-            res.status(200).send(result[0]);
+            const {author, ...info} = result[0];
+            res.status(200).send(info);
         }else{
             const [result2] = await db.promise().query(`SELECT id, name, author FROM professortable
             WHERE id = ? AND password = ?`, [id,password])
             if(result2.length > 0){
                 let accesstoken = jwt.sign(result2);
                 res.cookie('accesstoken', accesstoken);
-                res.status(201).send(result2[0]);
+                const {author, ...info} = result2[0];
+            res.status(201).send(info);
             }
             else{
                 res.sendStatus(401);
