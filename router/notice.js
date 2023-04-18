@@ -193,7 +193,7 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
                 where e.student_id = ? and e.semester = ? and e.sub_code = ?
                 order by n.id limit ?,1`,[userid, semester,sub_code,noticeid])
                 const notice_uniqueid = result[0].id;
-                const result2 = await db.promise().query(`select * from notice_view where notice_id = ? and user_id = ?`,
+                const result2 = await db.promise().query(`select * from notice_view where notice_id = ? and student_id = ?`,
                 [notice_uniqueid, userid])
                 if(result2[0].length > 0){
                     const result3 = await notice_function.select_noticefile(notice_uniqueid);
@@ -268,89 +268,85 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
  *      schema:
  *        type: string
  *  get:
- *    summary: 해당 과목의 공지사항 버튼 클릭
- *    description: 공지사항 버튼 클릭
+ *    summary: 해당 과목의 공지사항 전체 조회
+ *    description: 공지사항 전체 조회
  *    security:
  *      - CookieAuth: []
  *    responses:
  *      '200':
- *        description: 학생일 때 해당 과목의 공지사항 버튼 클릭 성공
+ *        description: 학생일 때 해당 과목의 공지사항 전체 조회 성공
  *        content:
  *          application/json:
  *            schema:
- *              type: object
- *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                title:
- *                  type: string
- *                  description: 제목
- *                content:
- *                  type: string
- *                  description: 본문
- *                file_name:
- *                  type: string
- *                  description: 파일이름
- *                file_data:
- *                  type: byte
- *                  format: binary
- *                  description: 파일데이터
- *                writer:
- *                  type: string
- *                  description: 작성자
- *                updated_time:
- *                  type: string
- *                  format: date-time
- *                  description: 업데이트 날짜
- *                view:
- *                  type: integer
- *                  description: 조회수
- *                semester:
- *                  type: string
- *                  description: 년도-학기
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  id:
+ *                    type: integer
+ *                    description: 공지사항 번호
+ *                  sub_code:
+ *                    type: string
+ *                    description: 과목코드
+ *                  professor_name:
+ *                    type: string
+ *                    description: 교수이름
+ *                  title:
+ *                    type: string
+ *                    description: 제목
+ *                  content:
+ *                    type: string
+ *                    description: 본문
+ *                  writer:
+ *                    type: string
+ *                    description: 작성자
+ *                  updated_time:
+ *                    type: string
+ *                    format: date-time
+ *                    description: 생성 날짜
+ *                  view:
+ *                    type: integer
+ *                    description: 조회수
+ *                  semester:
+ *                    type: string
+ *                    description: 년도-학기
  *      '201':
- *        description: 교수일 때 해당 공지사항 출력 성공
+ *        description: 교수일 때 해당 과목의 공지사항 전체 조회 성공
  *        content:
  *          application/json:
  *            schema:
- *              type: object
- *              properties:
- *                id:
- *                  type: int
- *                  description: 공지사항 번호
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                title:
- *                  type: string
- *                  description: 제목
- *                file_name:
- *                  type: string
- *                  description: 파일이름
- *                file_data:
- *                  type: byte
- *                  format: binary
- *                  description: 파일데이터
- *                writer:
- *                  type: string
- *                  description: 작성자
- *                created_time:
- *                  type: string
- *                  format: date-time
- *                  description: 생성날짜
- *                view:
- *                  type: integer
- *                  description: 조회수
- *                semester:
- *                  type: string
- *                  description: 년도-학기
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  id:
+ *                    type: integer
+ *                    description: 공지사항 번호
+ *                  sub_code:
+ *                    type: string
+ *                    description: 과목코드
+ *                  professor_name:
+ *                    type: string
+ *                    description: 교수이름
+ *                  title:
+ *                    type: string
+ *                    description: 제목
+ *                  content:
+ *                    type: string
+ *                    description: 본문
+ *                  writer:
+ *                    type: string
+ *                    description: 작성자
+ *                  updated_time:
+ *                    type: string
+ *                    format: date-time
+ *                    description: 생성 날짜
+ *                  view:
+ *                    type: integer
+ *                    description: 조회수
+ *                  semester:
+ *                    type: string
+ *                    description: 년도-학기
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -511,9 +507,6 @@ router.post('/:subjectID/:semesterID/:noticeID/update', upload.array('files'), a
  *            required:
  *              - title
  *              - content
- *          encoding:
- *            files:
- *              contentType: multipart/form-data
  *    responses:
  *      '200':
  *        description: 공지사항 생성 성공

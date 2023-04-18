@@ -92,8 +92,8 @@ router.get('/', async (req, res) =>{
  * @openapi
  * /information_check:
  *  post:
- *    summary: 강의계획서 조회
- *    description: 해당하는 강의 조회
+ *    summary: 개인정보 변경
+ *    description: 개인정보 변경
  *    security:
  *      - CookieAuth: []
  *    requestBody:

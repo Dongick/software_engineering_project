@@ -154,7 +154,7 @@ router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res
  *                  type: string
  *                  description: 파일이름
  *                file_data:
- *                  type: byte
+ *                  type: string
  *                  format: binary
  *                  description: 파일데이터
  *                writer:
@@ -268,89 +268,85 @@ router.get('/:subjectID/:semesterID/:lecture_materialID', async (req, res) => {
  *      schema:
  *        type: string
  *  get:
- *    summary: 해당 과목의 강의자료실 버튼 클릭
- *    description: 강의자료실 버튼 클릭
+ *    summary: 해당 과목의 강의자료실 전체 조회
+ *    description: 강의자료실 전체 조회
  *    security:
  *      - CookieAuth: []
  *    responses:
  *      '200':
- *        description: 학생일 때 해당 과목의 강의자료실 버튼 클릭 성공
+ *        description: 학생일 때 해당 과목의 강의자료실 전체 조회 성공
  *        content:
  *          application/json:
  *            schema:
- *              type: object
- *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                title:
- *                  type: string
- *                  description: 제목
- *                content:
- *                  type: string
- *                  description: 본문
- *                file_name:
- *                  type: string
- *                  description: 파일이름
- *                file_data:
- *                  type: byte
- *                  format: binary
- *                  description: 파일데이터
- *                writer:
- *                  type: string
- *                  description: 작성자
- *                updated_time:
- *                  type: string
- *                  format: date-time
- *                  description: 업데이트 날짜
- *                view:
- *                  type: integer
- *                  description: 조회수
- *                semester:
- *                  type: string
- *                  description: 년도-학기
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  id:
+ *                    type: integer
+ *                    description: 강의자료실 번호
+ *                  sub_code:
+ *                    type: string
+ *                    description: 과목코드
+ *                  professor_name:
+ *                    type: string
+ *                    description: 교수이름
+ *                  title:
+ *                    type: string
+ *                    description: 제목
+ *                  content:
+ *                    type: string
+ *                    description: 본문
+ *                  writer:
+ *                    type: string
+ *                    description: 작성자
+ *                  updated_time:
+ *                    type: string
+ *                    format: date-time
+ *                    description: 생성 날짜
+ *                  view:
+ *                    type: integer
+ *                    description: 조회수
+ *                  semester:
+ *                    type: string
+ *                    description: 년도-학기
  *      '201':
- *        description: 교수일 때 해당 강의자료실 출력 성공
+ *        description: 교수일 때 해당 강의자료실 전체 조회 성공
  *        content:
  *          application/json:
  *            schema:
- *              type: object
- *              properties:
- *                id:
- *                  type: int
- *                  description: 강의자료실 번호
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                title:
- *                  type: string
- *                  description: 제목
- *                file_name:
- *                  type: string
- *                  description: 파일이름
- *                file_data:
- *                  type: byte
- *                  format: binary
- *                  description: 파일데이터
- *                writer:
- *                  type: string
- *                  description: 작성자
- *                created_time:
- *                  type: string
- *                  format: date-time
- *                  description: 생성날짜
- *                view:
- *                  type: integer
- *                  description: 조회수
- *                semester:
- *                  type: string
- *                  description: 년도-학기
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  id:
+ *                    type: integer
+ *                    description: 강의자료실 번호
+ *                  sub_code:
+ *                    type: string
+ *                    description: 과목코드
+ *                  professor_name:
+ *                    type: string
+ *                    description: 교수이름
+ *                  title:
+ *                    type: string
+ *                    description: 제목
+ *                  content:
+ *                    type: string
+ *                    description: 본문
+ *                  writer:
+ *                    type: string
+ *                    description: 작성자
+ *                  updated_time:
+ *                    type: string
+ *                    format: date-time
+ *                    description: 생성 날짜
+ *                  view:
+ *                    type: integer
+ *                    description: 조회수
+ *                  semester:
+ *                    type: string
+ *                    description: 년도-학기
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -428,9 +424,6 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *            required:
  *              - title
  *              - content
- *          encoding:
- *            files:
- *              contentType: multipart/form-data
  *    responses:
  *      '200':
  *        description: 강의자료실 생성 성공

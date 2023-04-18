@@ -48,7 +48,6 @@ router.post('/find_id', async (req, res) => {
         } else{
             const [result2] = await db.promise().query(`SELECT id FROM professortable 
             WHERE name = ? AND email = ?`, [name,email]);
-            console.log(result2[0]);
             if(result2.length > 0){
                 res.status(200).send(result2[0]);
             } else{
@@ -62,7 +61,7 @@ router.post('/find_id', async (req, res) => {
 
 /**
  * @openapi
- * /login/find_pw/change_pw:
+ * /login/change_pw:
  *  post:
  *    summary: Change password
  *    description: 비밀번호 변경
@@ -106,7 +105,6 @@ router.post('/change_pw', async (req, res) =>{
         throw err;
     }
 })
-
 
 /**
  * @openapi

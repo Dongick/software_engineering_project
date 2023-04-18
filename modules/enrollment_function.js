@@ -16,8 +16,8 @@ module.exports = {
             from enrollment e join subject s on e.sub_code = s.sub_code and e.semester = s.semester
             join professortable p on s.professor_id = p.id where s.semester = ? and e.student_id = ?`, [semester, studnet_id]);
             const total_result = {
-                ...result,
-                '수강 신청 목록': {...result2}
+                'sub_list': {...result},
+                'enrollment_list': {...result2}
             }
             return total_result;
         }

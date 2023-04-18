@@ -157,11 +157,10 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
  *                  type: string
  *                  description: 교수명
  *                textbook:
- *                  type: array
+ *                  type: object
  *                  description: 교재
- *                  items:
- *                    type: object
- *                    properties:
+ *                  properties:
+ *                    '0':
  *                      title:
  *                        type: string
  *                        description: 제목
@@ -174,18 +173,39 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
  *                      publish_year:
  *                        type: string
  *                        description: 출판일
+ *                    '1':
+ *                      title:
+ *                        type: string
+ *                        description: 제목
+ *                      author:
+ *                        type: string
+ *                        description: 저자
+ *                      publisher:
+ *                        type: string
+ *                        description: 출판사
+ *                      publish_year:
+ *                        type: string
+ *                        description: 출판일
+ *                    # 이하 생략(textbook의 다른 항목들도 동일한 방식으로 정의)
  *                lec_schedule:
- *                  type: array
+ *                  type: object
  *                  description: 강의일정
- *                  items:
- *                    type: object
- *                    properties:
+ *                  properties:
+ *                    '0':
  *                      week:
  *                        type: string
  *                        description: 주차
  *                      content:
  *                        type: string
  *                        description: 주차별 설명
+ *                    '1':
+ *                      week:
+ *                        type: string
+ *                        description: 주차
+ *                      content:
+ *                        type: string
+ *                        description: 주차별 설명
+ *                    # 이하 생략(lec_schedule의 다른 항목들도 동일한 방식으로 정의)
  *      '201':
  *        description: 교수일 때 해당 강의계획서 조회
  *        content:
@@ -236,11 +256,10 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
  *                  type: string
  *                  description: 교수명
  *                textbook:
- *                  type: array
+ *                  type: object
  *                  description: 교재
- *                  items:
- *                    type: object
- *                    properties:
+ *                  properties:
+ *                    '0':
  *                      title:
  *                        type: string
  *                        description: 제목
@@ -253,18 +272,39 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
  *                      publish_year:
  *                        type: string
  *                        description: 출판일
+ *                    '1':
+ *                      title:
+ *                        type: string
+ *                        description: 제목
+ *                      author:
+ *                        type: string
+ *                        description: 저자
+ *                      publisher:
+ *                        type: string
+ *                        description: 출판사
+ *                      publish_year:
+ *                        type: string
+ *                        description: 출판일
+ *                    # 이하 생략(textbook의 다른 항목들도 동일한 방식으로 정의)
  *                lec_schedule:
- *                  type: array
+ *                  type: object
  *                  description: 강의일정
- *                  items:
- *                    type: object
- *                    properties:
+ *                  properties:
+ *                    '0':
  *                      week:
  *                        type: string
  *                        description: 주차
  *                      content:
  *                        type: string
  *                        description: 주차별 설명
+ *                    '1':
+ *                      week:
+ *                        type: string
+ *                        description: 주차
+ *                      content:
+ *                        type: string
+ *                        description: 주차별 설명
+ *                    # 이하 생략(lec_schedule의 다른 항목들도 동일한 방식으로 정의)
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -331,7 +371,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *    requestBody:
  *      required: true
  *      content:
- *        multipart/form-data:
+ *        application/json:
  *          schema:
  *            type: object
  *            properties:
@@ -351,38 +391,55 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *                type: string
  *                description: 평가방법비율
  *              textbook:
- *                type: array
+ *                type: object
  *                description: 교재
- *                items:
- *                  type: object
- *                  required:
- *                    - title
- *                    - author
- *                  properties:
+ *                properties:
+ *                  '0':
  *                    title:
  *                      type: string
- *                      description: 교재 제목
+ *                      description: 제목
  *                    author:
  *                      type: string
- *                      description: 교재 저자
+ *                      description: 저자
  *                    publisher:
  *                      type: string
- *                      description: 교재 출판사
+ *                      description: 출판사
  *                    publish_year:
  *                      type: string
- *                      description: 교재 출판일
- *              lecture_schedule:
- *                type: array
- *                description: 강의 일정
- *                items:
- *                  type: object
- *                  properties:
+ *                      description: 출판일
+ *                  '1':
+ *                    title:
+ *                      type: string
+ *                      description: 제목
+ *                    author:
+ *                      type: string
+ *                      description: 저자
+ *                    publisher:
+ *                      type: string
+ *                      description: 출판사
+ *                    publish_year:
+ *                      type: string
+ *                      description: 출판일
+ *                  # 이하 생략(textbook 다른 항목들도 동일한 방식으로 정의)
+ *              lec_schedule:
+ *                type: object
+ *                description: 강의일정
+ *                properties:
+ *                  '0':
  *                    week:
  *                      type: string
  *                      description: 주차
  *                    content:
  *                      type: string
  *                      description: 주차별 설명
+ *                  '1':
+ *                    week:
+ *                      type: string
+ *                      description: 주차
+ *                    content:
+ *                      type: string
+ *                      description: 주차별 설명
+ *                  # 이하 생략(lec_schedule의 다른 항목들도 동일한 방식으로 정의)
  *    responses:
  *      '200':
  *        description: 공지사항 생성 성공
@@ -476,38 +533,55 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
  *                type: string
  *                description: 평가방법비율
  *              textbook:
- *                type: array
+ *                type: object
  *                description: 교재
- *                items:
- *                  type: object
- *                  required:
- *                    - title
- *                    - author
- *                  properties:
+ *                properties:
+ *                  '0':
  *                    title:
  *                      type: string
- *                      description: 교재 제목
+ *                      description: 제목
  *                    author:
  *                      type: string
- *                      description: 교재 저자
+ *                      description: 저자
  *                    publisher:
  *                      type: string
- *                      description: 교재 출판사
+ *                      description: 출판사
  *                    publish_year:
  *                      type: string
- *                      description: 교재 출판일
- *              lecture_schedule:
- *                type: array
- *                description: 강의 일정
- *                items:
- *                  type: object
- *                  properties:
+ *                      description: 출판일
+ *                  '1':
+ *                    title:
+ *                      type: string
+ *                      description: 제목
+ *                    author:
+ *                      type: string
+ *                      description: 저자
+ *                    publisher:
+ *                      type: string
+ *                      description: 출판사
+ *                    publish_year:
+ *                      type: string
+ *                      description: 출판일
+ *                  # 이하 생략(textbook 다른 항목들도 동일한 방식으로 정의)
+ *              lec_schedule:
+ *                type: object
+ *                description: 강의일정
+ *                properties:
+ *                  '0':
  *                    week:
  *                      type: string
  *                      description: 주차
  *                    content:
  *                      type: string
  *                      description: 주차별 설명
+ *                  '1':
+ *                    week:
+ *                      type: string
+ *                      description: 주차
+ *                    content:
+ *                      type: string
+ *                      description: 주차별 설명
+ *                  # 이하 생략(lec_schedule의 다른 항목들도 동일한 방식으로 정의)
  *    responses:
  *      '200':
  *        description: 공지사항 생성 성공
@@ -594,23 +668,25 @@ router.post('/:subjectID/:semesterID/update', async(req, res) => {
  *        content:
  *          application/json:
  *            schema:
- *              type: object
- *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                sub_name:
- *                  type: string
- *                  description: 과목이름
- *                credit:
- *                  type: string
- *                  description: 학점
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                phone_number:
- *                  type: string
- *                  description: 교수 폰번호
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  sub_code:
+ *                    type: string
+ *                    description: 과목코드
+ *                  sub_name:
+ *                    type: string
+ *                    description: 과목이름
+ *                  credit:
+ *                    type: string
+ *                    description: 학점
+ *                  professor_name:
+ *                    type: string
+ *                    description: 교수이름
+ *                  phone_number:
+ *                    type: string
+ *                    description: 교수 폰번호
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':

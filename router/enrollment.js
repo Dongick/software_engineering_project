@@ -20,60 +20,134 @@ const enrollment_function = require('../modules/enrollment_function');
  *            schema:
  *              type: object
  *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                sub_name:
- *                  type: string
- *                  description: 과목이름
- *                credit:
- *                  type: string
- *                  description: 학점
- *                time:
- *                  type: string
- *                  description: 강의시간
- *                class:
- *                  type: string
- *                  description: 강의실
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                major_area:
- *                  type: string
- *                  description: 영역
- *                classification:
- *                  type: string
- *                  description: 이수 구분
- *                remain_seat:
- *                  type: string
- *                  description: 남은 좌석 수
- *                수강 신청 목록:
+ *                sub_list:
  *                  type: object
+ *                  description: 과목 목록
  *                  properties:
- *                    sub_code:
- *                      type: string
- *                      description: 과목코드
- *                    sub_name:
- *                      type: string
- *                      description: 과목이름
- *                    credit:
- *                      type: string
- *                      description: 학점
- *                    time:
- *                      type: string
- *                      description: 강의시간
- *                    class:
- *                      type: string
- *                      description: 강의실
- *                    professor_name:
- *                      type: string
- *                      description: 교수이름
- *                    major_area:
- *                      type: string
- *                      description: 영역
- *                    classification:
- *                      type: string
- *                      description: 이수 구분
+ *                    '0':
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목명
+ *                      credit:
+ *                        type: integer
+ *                        description: 학점
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      semester:
+ *                        type: string
+ *                        description: 학기
+ *                      time:
+ *                        type: string
+ *                        description: 강의시간
+ *                      class:
+ *                        type: string
+ *                        description: 강의실
+ *                      professor_name:
+ *                        type: string
+ *                        description: 교수명명
+ *                      major_area:
+ *                        type: string
+ *                        description: 과목영역
+ *                      classification:
+ *                        type: string
+ *                        description: 구분
+ *                      remain_seat:
+ *                        type: integer
+ *                        description: 남은 좌석 수
+ *                    '1':
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목명
+ *                      credit:
+ *                        type: integer
+ *                        description: 학점
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      semester:
+ *                        type: string
+ *                        description: 학기
+ *                      time:
+ *                        type: string
+ *                        description: 강의시간
+ *                      class:
+ *                        type: string
+ *                        description: 강의실
+ *                      professor_name:
+ *                        type: string
+ *                        description: 교수명명
+ *                      major_area:
+ *                        type: string
+ *                        description: 과목영역
+ *                      classification:
+ *                        type: string
+ *                        description: 구분
+ *                      remain_seat:
+ *                        type: integer
+ *                        description: 남은 좌석 수
+ *                    # 이하 생략(sub_list의 다른 항목들도 동일한 방식으로 정의)
+ *                enrollment_list:
+ *                  type: object
+ *                  description: 수강 신청 목록
+ *                  properties:
+ *                    '0':
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목명
+ *                      credit:
+ *                        type: integer
+ *                        description: 학점
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      semester:
+ *                        type: string
+ *                        description: 학기
+ *                      time:
+ *                        type: string
+ *                        description: 강의시간
+ *                      class:
+ *                        type: string
+ *                        description: 강의실
+ *                      professor_name:
+ *                        type: string
+ *                        description: 교수명명
+ *                      major_area:
+ *                        type: string
+ *                        description: 과목영역
+ *                      classification:
+ *                        type: string
+ *                        description: 구분
+ *                    '1':
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목명
+ *                      credit:
+ *                        type: integer
+ *                        description: 학점
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      semester:
+ *                        type: string
+ *                        description: 학기
+ *                      time:
+ *                        type: string
+ *                        description: 강의시간
+ *                      class:
+ *                        type: string
+ *                        description: 강의실
+ *                      professor_name:
+ *                        type: string
+ *                        description: 교수명명
+ *                      major_area:
+ *                        type: string
+ *                        description: 과목영역
+ *                      classification:
+ *                        type: string
+ *                        description: 구분
+ *                    # 이하 생략(enrollment_list의 다른 항목들도 동일한 방식으로 정의)
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -254,60 +328,134 @@ router.post('/delete', async (req, res) =>{
  *            schema:
  *              type: object
  *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                sub_name:
- *                  type: string
- *                  description: 과목이름
- *                credit:
- *                  type: string
- *                  description: 학점
- *                time:
- *                  type: string
- *                  description: 강의시간
- *                class:
- *                  type: string
- *                  description: 강의실
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                major_area:
- *                  type: string
- *                  description: 영역
- *                classification:
- *                  type: string
- *                  description: 이수 구분
- *                remain_seat:
- *                  type: string
- *                  description: 남은 좌석 수
- *                수강 신청 목록:
+ *                sub_list:
  *                  type: object
+ *                  description: 과목 목록
  *                  properties:
- *                    sub_code:
- *                      type: string
- *                      description: 과목코드
- *                    sub_name:
- *                      type: string
- *                      description: 과목이름
- *                    credit:
- *                      type: string
- *                      description: 학점
- *                    time:
- *                      type: string
- *                      description: 강의시간
- *                    class:
- *                      type: string
- *                      description: 강의실
- *                    professor_name:
- *                      type: string
- *                      description: 교수이름
- *                    major_area:
- *                      type: string
- *                      description: 영역
- *                    classification:
- *                      type: string
- *                      description: 이수 구분
+ *                    '0':
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목명
+ *                      credit:
+ *                        type: integer
+ *                        description: 학점
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      semester:
+ *                        type: string
+ *                        description: 학기
+ *                      time:
+ *                        type: string
+ *                        description: 강의시간
+ *                      class:
+ *                        type: string
+ *                        description: 강의실
+ *                      professor_name:
+ *                        type: string
+ *                        description: 교수명명
+ *                      major_area:
+ *                        type: string
+ *                        description: 과목영역
+ *                      classification:
+ *                        type: string
+ *                        description: 구분
+ *                      remain_seat:
+ *                        type: integer
+ *                        description: 남은 좌석 수
+ *                    '1':
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목명
+ *                      credit:
+ *                        type: integer
+ *                        description: 학점
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      semester:
+ *                        type: string
+ *                        description: 학기
+ *                      time:
+ *                        type: string
+ *                        description: 강의시간
+ *                      class:
+ *                        type: string
+ *                        description: 강의실
+ *                      professor_name:
+ *                        type: string
+ *                        description: 교수명명
+ *                      major_area:
+ *                        type: string
+ *                        description: 과목영역
+ *                      classification:
+ *                        type: string
+ *                        description: 구분
+ *                      remain_seat:
+ *                        type: integer
+ *                        description: 남은 좌석 수
+ *                    # 이하 생략(sub_list의 다른 항목들도 동일한 방식으로 정의)
+ *                enrollment_list:
+ *                  type: object
+ *                  description: 수강 신청 목록
+ *                  properties:
+ *                    '0':
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목명
+ *                      credit:
+ *                        type: integer
+ *                        description: 학점
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      semester:
+ *                        type: string
+ *                        description: 학기
+ *                      time:
+ *                        type: string
+ *                        description: 강의시간
+ *                      class:
+ *                        type: string
+ *                        description: 강의실
+ *                      professor_name:
+ *                        type: string
+ *                        description: 교수명명
+ *                      major_area:
+ *                        type: string
+ *                        description: 과목영역
+ *                      classification:
+ *                        type: string
+ *                        description: 구분
+ *                    '1':
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목명
+ *                      credit:
+ *                        type: integer
+ *                        description: 학점
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      semester:
+ *                        type: string
+ *                        description: 학기
+ *                      time:
+ *                        type: string
+ *                        description: 강의시간
+ *                      class:
+ *                        type: string
+ *                        description: 강의실
+ *                      professor_name:
+ *                        type: string
+ *                        description: 교수명명
+ *                      major_area:
+ *                        type: string
+ *                        description: 과목영역
+ *                      classification:
+ *                        type: string
+ *                        description: 구분
+ *                    # 이하 생략(enrollment_list의 다른 항목들도 동일한 방식으로 정의)
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':

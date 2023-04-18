@@ -6,7 +6,7 @@ const score_funciton = require('../modules/score_function');
 
 /**
  * @openapi
- * /grade/{subjectID}/{semesterID}:
+ * /grade_entry/{subjectID}/{semesterID}:
  *  parameters:
  *    - name: subjectID
  *      in: path
@@ -31,26 +31,28 @@ const score_funciton = require('../modules/score_function');
  *        content:
  *          application/json:
  *            schema:
- *              type: object
- *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                semester:
- *                  type: string
- *                  description: 학기
- *                sub_name:
- *                  type: string
- *                  description: 과목명
- *                student_id:
- *                  type: integer
- *                  description: 학생 학번
- *                student_name:
- *                  type: string
- *                  description: 학생 이름
- *                grade:
- *                  type: string
- *                  description: 성적
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  semester:
+ *                    type: string
+ *                    description: 학기
+ *                  sub_code:
+ *                    type: string
+ *                    description: 과목코드
+ *                  sub_name:
+ *                    type: string
+ *                    description: 과목명
+ *                  student_id:
+ *                    type: integer
+ *                    description: 학생 학번
+ *                  student_name:
+ *                    type: string
+ *                    description: 학생 이름
+ *                  grade:
+ *                    type: string
+ *                    description: 성적
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -78,7 +80,7 @@ router.get('/:subjectID/:semesterID', async (req, res) =>{
 
 /**
  * @openapi
- * /grade/{subjectID}/{semesterID}:
+ * /grade_entry/{subjectID}/{semesterID}:
  *  parameters:
  *    - name: subjectID
  *      in: path
@@ -94,13 +96,13 @@ router.get('/:subjectID/:semesterID', async (req, res) =>{
  *        type: string
  *  post:
  *    summary: 성적 입력
- *    description: 성적 입력력
+ *    description: 성적 입력
  *    security:
  *      - CookieAuth: []
  *    requestBody:
  *      required: true
  *      content:
- *        multipart/form-data:
+ *        application/json:
  *          schema:
  *            type: object
  *            properties:
