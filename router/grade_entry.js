@@ -63,7 +63,7 @@ router.get('/:subjectID/:semesterID', async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
@@ -131,7 +131,7 @@ router.post('/:subjectID/:semesterID', async (req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;

@@ -32,10 +32,10 @@ router.post('/id_check', async (req, res) =>{
         const [result] = await db.promise().query(`SELECT * FROM professortable
         WHERE id = ?`, [professor_id])
         if(result.length > 0){
-            res.sendStatus(409);
+            return res.sendStatus(409);
         }
         else{
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
     }
     catch(err){
@@ -90,7 +90,7 @@ router.post('/', async (req, res) => {
         values(?,?,?,?,?,?,?,?);`,
         [professor.id,professor.password,professor.name,professor.school_name,professor.major,professor.email,professor.phone_number,2], 
         )
-        res.sendStatus(200);
+        return res.sendStatus(200);
     }
     catch(err){
         throw err;

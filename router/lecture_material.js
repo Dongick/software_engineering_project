@@ -46,7 +46,7 @@ router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             let sub_code = req.params.subjectID;
             let semester = req.params.semesterID;
@@ -56,7 +56,7 @@ router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res
             where professor_name=? and semester=? and sub_code = ?
             order by id limit ?,1) tmp);`,
             [token.name, semester, sub_code, lecture_materialid])
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
     }
     catch(err){
@@ -99,38 +99,55 @@ router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res
  *            schema:
  *              type: object
  *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                title:
- *                  type: string
- *                  description: 제목
- *                content:
- *                  type: string
- *                  description: 본문
- *                file_name:
- *                  type: string
- *                  description: 파일이름
- *                file_data:
- *                  type: string
- *                  format: binary
- *                  description: 파일데이터
- *                writer:
- *                  type: string
- *                  description: 작성자
- *                updated_time:
- *                  type: string
- *                  format: date-time
- *                  description: 업데이트 날짜
- *                view:
- *                  type: integer
- *                  description: 조회수
- *                semester:
- *                  type: string
- *                  description: 년도-학기
+ *                강의자료실 정보:
+ *                  type: object
+ *                  properties:
+ *                    sub_code:
+ *                      type: string
+ *                      description: 과목코드
+ *                    professor_name:
+ *                      type: string
+ *                      description: 교수이름
+ *                    title:
+ *                      type: string
+ *                      description: 제목
+ *                    content:
+ *                      type: string
+ *                      description: 본문
+ *                    writer:
+ *                      type: string
+ *                      description: 작성자
+ *                    updated_time:
+ *                      type: string
+ *                      format: date-time
+ *                      description: 업데이트 날짜
+ *                    view:
+ *                      type: integer
+ *                      description: 조회수
+ *                    semester:
+ *                      type: string
+ *                      description: 년도-학기
+ *                파일 정보:
+ *                  type: array
+ *                  description: 파일 정보
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      file_name:
+ *                        type: string
+ *                        description: 파일이름
+ *                      file_data:
+ *                        type: object
+ *                        properties:
+ *                          type:
+ *                            type: string
+ *                            description: 파일 타입
+ *                          data:
+ *                            type: array
+ *                            items:
+ *                              type: integer
+ *                              description: 파일 데이터 (10진수)
+ *                            desciption: 파일 데이터
  *      '201':
  *        description: 교수일 때 해당 강의자료실 출력 성공
  *        content:
@@ -138,38 +155,55 @@ router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res
  *            schema:
  *              type: object
  *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                title:
- *                  type: string
- *                  description: 제목
- *                content:
- *                  type: string
- *                  description: 본문
- *                file_name:
- *                  type: string
- *                  description: 파일이름
- *                file_data:
- *                  type: string
- *                  format: binary
- *                  description: 파일데이터
- *                writer:
- *                  type: string
- *                  description: 작성자
- *                updated_time:
- *                  type: string
- *                  format: date-time
- *                  description: 업데이트 날짜
- *                view:
- *                  type: integer
- *                  description: 조회수
- *                semester:
- *                  type: string
- *                  description: 년도-학기
+ *                강의자료실 정보:
+ *                  type: object
+ *                  properties:
+ *                    sub_code:
+ *                      type: string
+ *                      description: 과목코드
+ *                    professor_name:
+ *                      type: string
+ *                      description: 교수이름
+ *                    title:
+ *                      type: string
+ *                      description: 제목
+ *                    content:
+ *                      type: string
+ *                      description: 본문
+ *                    writer:
+ *                      type: string
+ *                      description: 작성자
+ *                    updated_time:
+ *                      type: string
+ *                      format: date-time
+ *                      description: 업데이트 날짜
+ *                    view:
+ *                      type: integer
+ *                      description: 조회수
+ *                    semester:
+ *                      type: string
+ *                      description: 년도-학기
+ *                파일 정보:
+ *                  type: array
+ *                  description: 파일 정보
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      file_name:
+ *                        type: string
+ *                        description: 파일이름
+ *                      file_data:
+ *                        type: object
+ *                        properties:
+ *                          type:
+ *                            type: string
+ *                            description: 파일 타입
+ *                          data:
+ *                            type: array
+ *                            items:
+ *                              type: integer
+ *                              description: 파일 데이터 (10진수)
+ *                            desciption: 파일 데이터
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -180,70 +214,40 @@ router.get('/:subjectID/:semesterID/:lecture_materialID', async (req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             const lecture_materialid = req.params.lecture_materialID - 1;
             const userid = token.id;
             if(token.author == 1){
-                const [result] = await db.promise().query(`select n.id as id
+                const [id] = await db.promise().query(`select n.id as id
                 from enrollment e join lecture_material n
                 on e.sub_code = n.sub_code and e.semester = n.semester
                 where e.student_id = ? and e.semester = ? and e.sub_code = ?
                 order by n.id limit ?,1`,[userid, semester,sub_code,lecture_materialid])
-                const lecture_material_uniqueid = result[0].id;
-                const result2 = await db.promise().query(`select * from lecture_material_view where lecture_material_id = ? and user_id = ?`,
-                [lecture_material_uniqueid, userid])
-                if(result2[0].length > 0){
-                    const result3 = await lecture_material_function.select_lecture_materialfile(lecture_material_uniqueid);
-                    if(result3.length > 0){
-                        const file_info = result3.map(file => [file.file_name, file.file_data]);
-                        const result4 = await lecture_material_function.select_lecture_material(lecture_material_uniqueid);
-                        const resultwithFile = {
-                        ...result4,
-                        file_name: file_info.map(file => file[0]),
-                        file_data: file_info.map(file => file[1])
-                        };
-                        res.status(200).send(resultwithFile);
-                    } else{
-                        const result4 = await lecture_material_function.select_lecture_material(lecture_material_uniqueid);
-                        res.status(200).send(result4);
-                    }
+                const lecture_material_id = id[0].id;
+                const view_check = await db.promise().query(`select * from lecture_material_view where lecture_material_id = ? and student_id = ?`,
+                [lecture_material_id, userid])
+                if(view_check[0].length > 0){
+                    const file = await lecture_material_function.select_lecture_materialfile(lecture_material_id);
+                    const lecture_material = await lecture_material_function.select_lecture_material(lecture_material_id);
+                    const result = await lecture_material_function.lecture_material_info(lecture_material, file);
+                    return res.status(200).send(result);
                 } else{
-                    db.promise().query(`update lecture_material set view = view + 1 where id = ?`,[lecture_material_uniqueid])
-                    db.promise().query(`insert into lecture_material_view(lecture_material_id, user_id) values(?,?)`,[lecture_material_uniqueid,userid])
-                    const result3 = await lecture_material_function.select_lecture_materialfile(lecture_material_uniqueid);
-                    if(result3.length > 0){
-                        const file_info = result3.map(file => [file.file_name, file.file_data]);
-                        const result4 = await lecture_material_function.select_lecture_material(lecture_material_uniqueid);
-                        const resultwithFile = {
-                        ...result4,
-                        file_name: file_info.map(file => file[0]),
-                        file_data: file_info.map(file => file[1])
-                        };
-                        res.status(200).send(resultwithFile);
-                    } else{
-                        const result4 = await lecture_material_function.select_lecture_material(lecture_material_uniqueid);
-                        res.status(200).send(result4);
-                    }
+                    db.promise().query(`update lecture_material set view = view + 1 where id = ?`,[lecture_material_id])
+                    db.promise().query(`insert into lecture_material_view(lecture_material_id, student_id) values(?,?)`,[lecture_material_id,userid])
+                    const file = await lecture_material_function.select_lecture_materialfile(lecture_material_id);
+                    const lecture_material = await lecture_material_function.select_lecture_material(lecture_material_id);
+                    const result = await lecture_material_function.lecture_material_info(lecture_material, file);
+                    return res.status(200).send(result);
                 }
             } else{
-                const lecture_material_uniqueid = await lecture_material_function.select_lecture_materialid(token.name, semester,sub_code,lecture_materialid);
-                const result3 = await lecture_material_function.select_lecture_materialfile(lecture_material_uniqueid);
-                if(result3.length > 0){
-                    const file_info = result3.map(file => [file.file_name, file.file_data]);
-                    const result4 = await lecture_material_function.select_lecture_material(lecture_material_uniqueid);
-                    const resultwithFile = {
-                    ...result4,
-                    file_name: file_info.map(file => file[0]),
-                    file_data: file_info.map(file => file[1])
-                    };
-                    res.status(201).send(resultwithFile);
-                } else{
-                    const result4 = await lecture_material_function.select_lecture_material(lecture_material_uniqueid);
-                    res.status(201).send(result4);
-                }
+                const lecture_material_id = await lecture_material_function.select_lecture_materialid(token.name, semester,sub_code,lecture_materialid);
+                const file = await lecture_material_function.select_lecture_materialfile(lecture_material_id);
+                const lecture_material = await lecture_material_function.select_lecture_material(lecture_material_id);
+                const result = await lecture_material_function.lecture_material_info(lecture_material, file);
+                return res.status(200).send(result);
             }
         }
     } catch(err){
@@ -357,7 +361,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             let sub_code = req.params.subjectID;
             let semester = req.params.semesterID;
@@ -367,12 +371,12 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
                 on e.sub_code = n.sub_code and e.semester = n.semester
                 where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
                 [token.id, semester,sub_code])
-                res.status(200).send(result);
+                return res.status(200).send(result);
             } else{
                 const [result] = await db.promise().query(`select id, sub_code, professor_name, title, writer, created_time, view, semester
                 from lecture_material where professor_name = ? and semester = ? and sub_code = ? order by id`,
                 [token.name, semester,sub_code])
-                res.status(201).send(result);
+                return res.status(201).send(result);
             }
         }
     }
@@ -437,7 +441,7 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             let sub_code = req.params.subjectID;
             let semester = req.params.semesterID;
@@ -454,7 +458,7 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
                 const lecture_material_id = result[0].id
                 lecture_material_function.insert_lecture_materialfile(lecture_material_id, file_info);
             }
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
     }
     catch(err){
@@ -519,7 +523,7 @@ router.post('/:subjectID/:semesterID/:lecture_materialID/update', async (req, re
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             let sub_code = req.params.subjectID;
             let semester = req.params.semesterID;
@@ -529,15 +533,15 @@ router.post('/:subjectID/:semesterID/:lecture_materialID/update', async (req, re
             let files = req.files;
             const lecture_material_id = await lecture_material_function.select_lecture_materialid(token.name, semester,sub_code,lecture_materialid)
             db.promise().query(`update lecture_material set title=?, content=? where id=?`, [title, content, lecture_material_id]);
-            const [result2] = await lecture_material_function.select_lecture_materialfile(lecture_material_id);
-            if(result2.length > 0){
+            const [view_check] = await lecture_material_function.select_lecture_materialfile(lecture_material_id);
+            if(view_check.length > 0){
                 await db.promise().query(`delete from lecture_material_file where lecture_material_id=?;`, [lecture_material_id]);
             }
             if(files){
                 const file_info = files.map(file => [file.originalname, file.buffer]);
                 lecture_material_function.insert_lecture_materialfile(lecture_material_id, file_info);
             }
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
     }
     catch(err){

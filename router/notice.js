@@ -46,7 +46,7 @@ router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             let sub_code = req.params.subjectID;
             let semester = req.params.semesterID;
@@ -56,7 +56,7 @@ router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
             where professor_name=? and semester=? and sub_code = ?
             order by id limit ?,1) tmp);`,
             [token.name, semester, sub_code, noticeid])
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
     }
     catch(err){
@@ -99,38 +99,55 @@ router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
  *            schema:
  *              type: object
  *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                title:
- *                  type: string
- *                  description: 제목
- *                content:
- *                  type: string
- *                  description: 본문
- *                file_name:
- *                  type: string
- *                  description: 파일이름
- *                file_data:
- *                  type: string
- *                  format: binary
- *                  description: 파일데이터
- *                writer:
- *                  type: string
- *                  description: 작성자
- *                updated_time:
- *                  type: string
- *                  format: date-time
- *                  description: 업데이트 날짜
- *                view:
- *                  type: integer
- *                  description: 조회수
- *                semester:
- *                  type: string
- *                  description: 년도-학기
+ *                공지사항 정보:
+ *                  type: object
+ *                  properties:
+ *                    sub_code:
+ *                      type: string
+ *                      description: 과목코드
+ *                    professor_name:
+ *                      type: string
+ *                      description: 교수이름
+ *                    title:
+ *                      type: string
+ *                      description: 제목
+ *                    content:
+ *                      type: string
+ *                      description: 본문
+ *                    writer:
+ *                      type: string
+ *                      description: 작성자
+ *                    updated_time:
+ *                      type: string
+ *                      format: date-time
+ *                      description: 업데이트 날짜
+ *                    view:
+ *                      type: integer
+ *                      description: 조회수
+ *                    semester:
+ *                      type: string
+ *                      description: 년도-학기
+ *                파일 정보:
+ *                  type: array
+ *                  description: 파일 정보
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      file_name:
+ *                        type: string
+ *                        description: 파일이름
+ *                      file_data:
+ *                        type: object
+ *                        properties:
+ *                          type:
+ *                            type: string
+ *                            description: 파일 타입
+ *                          data:
+ *                            type: array
+ *                            items:
+ *                              type: integer
+ *                              description: 파일 데이터 (10진수)
+ *                            desciption: 파일 데이터
  *      '201':
  *        description: 교수일 때 해당 공지사항 출력 성공
  *        content:
@@ -138,38 +155,55 @@ router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
  *            schema:
  *              type: object
  *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                professor_name:
- *                  type: string
- *                  description: 교수이름
- *                title:
- *                  type: string
- *                  description: 제목
- *                content:
- *                  type: string
- *                  description: 본문
- *                file_name:
- *                  type: string
- *                  description: 파일이름
- *                file_data:
- *                  type: byte
- *                  format: binary
- *                  description: 파일데이터
- *                writer:
- *                  type: string
- *                  description: 작성자
- *                updated_time:
- *                  type: string
- *                  format: date-time
- *                  description: 업데이트 날짜
- *                view:
- *                  type: integer
- *                  description: 조회수
- *                semester:
- *                  type: string
- *                  description: 년도-학기
+ *                공지사항 정보:
+ *                  type: object
+ *                  properties:
+ *                    sub_code:
+ *                      type: string
+ *                      description: 과목코드
+ *                    professor_name:
+ *                      type: string
+ *                      description: 교수이름
+ *                    title:
+ *                      type: string
+ *                      description: 제목
+ *                    content:
+ *                      type: string
+ *                      description: 본문
+ *                    writer:
+ *                      type: string
+ *                      description: 작성자
+ *                    updated_time:
+ *                      type: string
+ *                      format: date-time
+ *                      description: 업데이트 날짜
+ *                    view:
+ *                      type: integer
+ *                      description: 조회수
+ *                    semester:
+ *                      type: string
+ *                      description: 년도-학기
+ *                파일 정보:
+ *                  type: array
+ *                  description: 파일 정보
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      file_name:
+ *                        type: string
+ *                        description: 파일이름
+ *                      file_data:
+ *                        type: object
+ *                        properties:
+ *                          type:
+ *                            type: string
+ *                            description: 파일 타입
+ *                          data:
+ *                            type: array
+ *                            items:
+ *                              type: integer
+ *                              description: 파일 데이터 (10진수)
+ *                            desciption: 파일 데이터
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -180,70 +214,40 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             const noticeid = req.params.noticeID - 1;
             const userid = token.id;
             if(token.author == 1){
-                const [result] = await db.promise().query(`select n.id as id
+                const [id] = await db.promise().query(`select n.id as id
                 from enrollment e join notice n
                 on e.sub_code = n.sub_code and e.semester = n.semester
                 where e.student_id = ? and e.semester = ? and e.sub_code = ?
                 order by n.id limit ?,1`,[userid, semester,sub_code,noticeid])
-                const notice_uniqueid = result[0].id;
-                const result2 = await db.promise().query(`select * from notice_view where notice_id = ? and student_id = ?`,
-                [notice_uniqueid, userid])
-                if(result2[0].length > 0){
-                    const result3 = await notice_function.select_noticefile(notice_uniqueid);
-                    if(result3.length > 0){
-                        const file_info = result3.map(file => [file.file_name, file.file_data]);
-                        const result4 = await notice_function.select_notice(notice_uniqueid);
-                        const resultwithFile = {
-                        ...result4,
-                        file_name: file_info.map(file => file[0]),
-                        file_data: file_info.map(file => file[1])
-                        };
-                        res.status(200).send(resultwithFile);
-                    } else{
-                        const result4 = await notice_function.select_notice(notice_uniqueid);
-                        res.status(200).send(result4);
-                    }
+                const notice_id = id[0].id;
+                const view_check = await db.promise().query(`select * from notice_view where notice_id = ? and student_id = ?`,
+                [notice_id, userid])
+                if(view_check[0].length > 0){
+                    const file = await notice_function.select_noticefile(notice_id);
+                    const notice = await notice_function.select_notice(notice_id);
+                    const result = await notice_function.notice_info(notice, file);
+                    return res.status(200).send(result);
                 } else{
-                    db.promise().query(`update notice set view = view + 1 where id = ?`,[notice_uniqueid])
-                    db.promise().query(`insert into notice_view(notice_id, user_id) values(?,?)`,[notice_uniqueid,userid])
-                    const result3 = await notice_function.select_noticefile(notice_uniqueid);
-                    if(result3.length > 0){
-                        const file_info = result3.map(file => [file.file_name, file.file_data]);
-                        const result4 = await notice_function.select_notice(notice_uniqueid);
-                        const resultwithFile = {
-                        ...result4,
-                        file_name: file_info.map(file => file[0]),
-                        file_data: file_info.map(file => file[1])
-                        };
-                        res.status(200).send(resultwithFile);
-                    } else{
-                        const result4 = await notice_function.select_notice(notice_uniqueid);
-                        res.status(200).send(result4);
-                    }
+                    db.promise().query(`update notice set view = view + 1 where id = ?`,[notice_id])
+                    db.promise().query(`insert into notice_view(notice_id, user_id) values(?,?)`,[notice_id,userid])
+                    const file = await notice_function.select_noticefile(notice_id);
+                    const notice = await notice_function.select_notice(notice_id);
+                    const result = await notice_function.notice_info(notice, file);
+                    return res.status(200).send(result);
                 }
             } else{
-                const notice_uniqueid = await notice_function.select_noticeid(token.name, semester,sub_code,noticeid);
-                const result3 = await notice_function.select_noticefile(notice_uniqueid);
-                if(result3.length > 0){
-                    const file_info = result3.map(file => [file.file_name, file.file_data]);
-                    const result4 = await notice_function.select_notice(notice_uniqueid);
-                    const resultwithFile = {
-                    ...result4,
-                    file_name: file_info.map(file => file[0]),
-                    file_data: file_info.map(file => file[1])
-                    };
-                    res.status(201).send(resultwithFile);
-                } else{
-                    const result4 = await notice_function.select_notice(notice_uniqueid);
-                    res.status(201).send(result4);
-                }
+                const notice_id = await notice_function.select_noticeid(token.name, semester,sub_code,noticeid);
+                const file = await notice_function.select_noticefile(notice_id);
+                const notice = await notice_function.select_notice(notice_id);
+                const result = await notice_function.notice_info(notice, file);
+                    return res.status(201).send(result);
             }
         }
     } catch(err){
@@ -367,12 +371,12 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
                 on e.sub_code = n.sub_code and e.semester = n.semester
                 where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
                 [token.id, semester,sub_code])
-                res.status(200).send(result);
+                return res.status(200).send(result);
             } else{
                 const [result] = await db.promise().query(`select id, sub_code, professor_name, title, writer, created_time, view, semester
                 from notice where professor_name = ? and semester = ? and sub_code = ? order by id`,
                 [token.name, semester,sub_code])
-                res.status(201).send(result);
+                return res.status(201).send(result);
             }
         }
     }
@@ -456,7 +460,7 @@ router.post('/:subjectID/:semesterID/:noticeID/update', upload.array('files'), a
                 const file_info = files.map(file => [file.originalname, file.buffer]);
                 notice_function.insert_noticefile(notice_id, file_info);
             }
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
     }
     catch(err){
@@ -537,7 +541,7 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
                 const notice_id = result[0].id
                 notice_function.insert_noticefile(notice_id, file_info);
             }
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
     }
     catch(err){

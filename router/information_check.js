@@ -72,7 +72,7 @@ router.get('/', async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             if(token.author == 1){
                 const [result] = await db.promise().query(`select id, name, school_name, major, email, phone_number from studenttable where id = ?`, [token.id]);
@@ -124,7 +124,7 @@ router.post('/', async (req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             email = req.body.email;
             phone_number = req.body.phone_number;

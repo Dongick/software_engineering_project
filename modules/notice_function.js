@@ -41,5 +41,24 @@ module.exports = {
         catch(err){
             throw err;
         }
+    },
+    notice_info: async (notice, file) => {
+        try{
+            if(file.length > 0){
+                const result = {
+                    '공지사항 정보': notice,
+                    '파일 정보': file
+                };
+                return result;
+            }else{
+                const result = {
+                    '공지사항 정보': notice,
+                };
+                return result;
+            }
+        }
+        catch(err){
+            throw err;
+        }
     }
 }

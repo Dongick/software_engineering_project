@@ -61,10 +61,11 @@ const jwt = require('../modules/jwt');
  *                  type: number
  *                  description: 전체 평균 성적
  *                sub_info:
- *                  type: object
+ *                  type: array
  *                  description: 과목 정보
- *                  properties:
- *                    '0':
+ *                  items:
+ *                    type: object
+ *                    properties:
  *                      semester:
  *                        type: string
  *                        description: 학기
@@ -86,29 +87,6 @@ const jwt = require('../modules/jwt');
  *                      grade:
  *                        type: string
  *                        description: 성적
- *                    '1':
- *                      semester:
- *                        type: string
- *                        description: 학기
- *                      sub_code:
- *                        type: string
- *                        description: 과목코드
- *                      sub_name:
- *                        type: string
- *                        description: 과목명
- *                      major_area:
- *                        type: string
- *                        description: 과목영역
- *                      classification:
- *                        type: string
- *                        description: 구분
- *                      credit:
- *                        type: integer
- *                        description: 학점
- *                      grade:
- *                        type: string
- *                        description: 성적
- *                    # 이하 생략(sub_info의 다른 항목들도 동일한 방식으로 정의)
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -119,7 +97,7 @@ router.get('/', async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             const student_info_promise = db.promise().query(`select school_name, major, id student_id, name student_name from studenttable where id = ?`, [token.id]);
             const result_promise = db.promise().query(`select s.semester, s.sub_code, s.name sub_name, s.major_area, s.classification, s.credit, e.grade
@@ -157,16 +135,16 @@ router.get('/', async (req, res) =>{
             const get_total_credit = parseInt(credit_info[0].get_total_credit);
             const total_result = {
             studnet_info: student_info[0],
-            credit_info: {
-                major_credit,
-                general_credit,
-                total_credit,
-                get_major_credit,
-                get_general_credit,
-                get_total_credit
-            },
-            average_score: parseFloat(average_score),
-            sub_info: {...result}
+                credit_info: {
+                    major_credit,
+                    general_credit,
+                    total_credit,
+                    get_major_credit,
+                    get_general_credit,
+                    get_total_credit
+                },
+                average_score: parseFloat(average_score),
+                sub_info: result
             };
             return res.status(200).send(total_result);
         }

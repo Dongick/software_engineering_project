@@ -41,5 +41,24 @@ module.exports = {
         catch(err){
             throw err;
         }
+    },
+    lecture_material_info: async (lecture_material, file) => {
+        try{
+            if(file.length > 0){
+                const result = {
+                    '강의자료실 정보': lecture_material,
+                    '파일 정보': file
+                };
+                return result;
+            }else{
+                const result = {
+                    '강의자료실 정보': lecture_material,
+                };
+                return result;
+            }
+        }
+        catch(err){
+            throw err;
+        }
     }
 }

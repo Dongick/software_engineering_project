@@ -23,7 +23,7 @@ const router = express.Router();
 
 router.get('/', (req, res) =>{
     res.cookie('accesstoken', '', {maxAge:0});
-    res.sendStatus(200);
+    return res.sendStatus(200);
 })
 
 module.exports = router;

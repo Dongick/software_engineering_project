@@ -69,7 +69,7 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } 
         else{
             const sub_code = req.params.subjectID;
@@ -77,7 +77,7 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
             const [subject_professor_info] = await db.promise().query(`select s.sub_code, s.semester, s.name subject_name, s.credit, s.time, s.class, p.phone_number, p.email, p.name professor_name
             from subject s join professortable p on s.professor_id = p.id
             where s.sub_code = ? and s.semester = ?`, [sub_code, semester]);
-            res.status(200).send(subject_professor_info);
+            return res.status(200).send(subject_professor_info);
         }
     }
     catch(err){
@@ -156,11 +156,12 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
  *                professor_name:
  *                  type: string
  *                  description: 교수명
- *                textbook:
- *                  type: object
- *                  description: 교재
- *                  properties:
- *                    '0':
+ *                교재:
+ *                  type: array
+ *                  description: 교재 목록
+ *                  items:
+ *                    type: object
+ *                    properties:
  *                      title:
  *                        type: string
  *                        description: 제목
@@ -173,39 +174,18 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
  *                      publish_year:
  *                        type: string
  *                        description: 출판일
- *                    '1':
- *                      title:
- *                        type: string
- *                        description: 제목
- *                      author:
- *                        type: string
- *                        description: 저자
- *                      publisher:
- *                        type: string
- *                        description: 출판사
- *                      publish_year:
- *                        type: string
- *                        description: 출판일
- *                    # 이하 생략(textbook의 다른 항목들도 동일한 방식으로 정의)
- *                lec_schedule:
- *                  type: object
- *                  description: 강의일정
- *                  properties:
- *                    '0':
+ *                강의 일정 및 내용:
+ *                  type: array
+ *                  description: 강의 일정 및 내용
+ *                  items:
+ *                    type: object
+ *                    properties:
  *                      week:
  *                        type: string
  *                        description: 주차
  *                      content:
  *                        type: string
  *                        description: 주차별 설명
- *                    '1':
- *                      week:
- *                        type: string
- *                        description: 주차
- *                      content:
- *                        type: string
- *                        description: 주차별 설명
- *                    # 이하 생략(lec_schedule의 다른 항목들도 동일한 방식으로 정의)
  *      '201':
  *        description: 교수일 때 해당 강의계획서 조회
  *        content:
@@ -255,11 +235,12 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
  *                professor_name:
  *                  type: string
  *                  description: 교수명
- *                textbook:
- *                  type: object
- *                  description: 교재
- *                  properties:
- *                    '0':
+ *                교재:
+ *                  type: array
+ *                  description: 교재 목록
+ *                  items:
+ *                    type: object
+ *                    properties:
  *                      title:
  *                        type: string
  *                        description: 제목
@@ -272,39 +253,18 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
  *                      publish_year:
  *                        type: string
  *                        description: 출판일
- *                    '1':
- *                      title:
- *                        type: string
- *                        description: 제목
- *                      author:
- *                        type: string
- *                        description: 저자
- *                      publisher:
- *                        type: string
- *                        description: 출판사
- *                      publish_year:
- *                        type: string
- *                        description: 출판일
- *                    # 이하 생략(textbook의 다른 항목들도 동일한 방식으로 정의)
- *                lec_schedule:
- *                  type: object
- *                  description: 강의일정
- *                  properties:
- *                    '0':
+ *                강의 일정 및 내용:
+ *                  type: array
+ *                  description: 강의 일정 및 내용
+ *                  items:
+ *                    type: object
+ *                    properties:
  *                      week:
  *                        type: string
  *                        description: 주차
  *                      content:
  *                        type: string
  *                        description: 주차별 설명
- *                    '1':
- *                      week:
- *                        type: string
- *                        description: 주차
- *                      content:
- *                        type: string
- *                        description: 주차별 설명
- *                    # 이하 생략(lec_schedule의 다른 항목들도 동일한 방식으로 정의)
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -315,7 +275,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
@@ -332,14 +292,14 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             where syl.id = ?`, [syllabus[0].id]);
             const total_result = {
                 ...syllabus[0],
-                '교재': {...textbook},
-                '강의 일정 및 내용':{...lec_schedule}
+                '교재': textbook,
+                '강의 일정 및 내용':lec_schedule
             };
             const {id, ...result} = total_result;
             if(token.author == 1){
-                res.status(200).send(result);
+                return res.status(200).send(result);
             } else{
-                res.status(201).send(result);
+                return res.status(201).send(result);
             }
         }
     } catch(err){
@@ -453,7 +413,7 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } 
         else{
             const sub_code = req.params.subjectID;
@@ -481,7 +441,7 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
             db.promise().query(`insert into syllabus_textbook(syllabus_id, textbook_id) values ?`, [syllabus_textbook_info]);
             const lecture_schedule_info = Object.values(lecture_schedule).map(lec => [syllabus_id[0].id, lec.week, lec.content]);
             db.promise().query(`insert into lecture_schedule(syllabus_id, week, content) values ?`, [lecture_schedule_info]);
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
     }
     catch(err){
@@ -533,10 +493,11 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
  *                type: string
  *                description: 평가방법비율
  *              textbook:
- *                type: object
+ *                type: array
  *                description: 교재
- *                properties:
- *                  '0':
+ *                items:
+ *                  type: object
+ *                  properties:
  *                    title:
  *                      type: string
  *                      description: 제목
@@ -549,39 +510,18 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
  *                    publish_year:
  *                      type: string
  *                      description: 출판일
- *                  '1':
- *                    title:
- *                      type: string
- *                      description: 제목
- *                    author:
- *                      type: string
- *                      description: 저자
- *                    publisher:
- *                      type: string
- *                      description: 출판사
- *                    publish_year:
- *                      type: string
- *                      description: 출판일
- *                  # 이하 생략(textbook 다른 항목들도 동일한 방식으로 정의)
  *              lec_schedule:
- *                type: object
+ *                type: array
  *                description: 강의일정
- *                properties:
- *                  '0':
+ *                items:
+ *                  type: object
+ *                  properties:
  *                    week:
  *                      type: string
  *                      description: 주차
  *                    content:
  *                      type: string
  *                      description: 주차별 설명
- *                  '1':
- *                    week:
- *                      type: string
- *                      description: 주차
- *                    content:
- *                      type: string
- *                      description: 주차별 설명
- *                  # 이하 생략(lec_schedule의 다른 항목들도 동일한 방식으로 정의)
  *    responses:
  *      '200':
  *        description: 공지사항 생성 성공
@@ -595,7 +535,7 @@ router.post('/:subjectID/:semesterID/update', async(req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
@@ -610,8 +550,7 @@ router.post('/:subjectID/:semesterID/update', async(req, res) => {
             db.promise().query(`update syllabus set assistant_name=?, course_sumary=?, course_performance=?, operation_type=?, evaluation_method_ratio=?
             where sub_code=? and semester=?`, [assistant_name, course_sumary, course_performance, operation_type, evaluation_method_ratio, sub_code, semester]);
             const textbook_info = Object.values(textbook).map(text => [text.title, text.author, text.publisher, text.publish_year]);
-            db.promise().query(`insert ignore into textbook(title, author, publisher, publish_year)
-            values ?`, [textbook_info]);
+            db.promise().query(`insert ignore into textbook(title, author, publisher, publish_year) values ?`, [textbook_info]);
             const [syllabus_id] = await db.promise().query(`select id from syllabus where sub_code = ? and semester = ?`, [sub_code, semester]);
             const textbook_ids = [];
             for(let i = 0; i < textbook_info.length; i++){
@@ -624,7 +563,7 @@ router.post('/:subjectID/:semesterID/update', async(req, res) => {
             db.promise().query(`insert into syllabus_textbook(syllabus_id, textbook_id) values ?`, [syllabus_textbook_info]);
             const lecture_schedule_info = Object.values(lecture_schedule).map(lec => [syllabus_id[0].id, lec.week, lec.content]);
             db.promise().query(`insert into lecture_schedule(syllabus_id, week, content) values ?`, [lecture_schedule_info]);
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
     }
     catch(err){
@@ -696,7 +635,7 @@ router.post('/:subjectID/:semesterID/update', async(req, res) => {
 router.post('/', async (req, res) =>{
     const token = jwt.verify(req.cookies['accesstoken']);
     if (Number.isInteger(token)){
-        res.sendStatus(token);
+        return res.sendStatus(token);
     } else{
         let enrollment = req.body.enrollment;
         let professor_name = req.body.professor_name;
@@ -709,39 +648,39 @@ router.post('/', async (req, res) =>{
                     const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                     from subject s join professortable p on s.professor_id = p.id
                     where s.semester = ? and p.name = ?;`,[semester, professor_name])
-                    res.status(200).send(result);
+                    return res.status(200).send(result);
                 } else{
                     const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                     from subject s join professortable p on s.professor_id = p.id
                     where s.semester = ? and p.name = ? and s.major_area = ?;`,
                     [semester, professor_name, major_area])
-                    res.status(200).send(result);
+                    return res.status(200).send(result);
                 }
             } else if(professor_name.length == 0) {
                 if(major_area.length == 0){
                     const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                     from subject s join professortable p on s.professor_id = p.id
                     where s.semester = ? and s.name like ?;`,[semester, `%${sub_name}%`])
-                    res.status(200).send(result);
+                    return res.status(200).send(result);
                 } else{
                     const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                     from subject s join professortable p on s.professor_id = p.id
                     where s.semester = ? and s.name = ? and s.major_area = ?;`,
                     [semester, `%${sub_name}%`, major_area])
-                    res.status(200).send(result);
+                    return res.status(200).send(result);
                 }
             } else{
                 if(major_area.length == 0){
                     const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                     from subject s join professortable p on s.professor_id = p.id
                     where s.semester = ? and p.name = ? and s.name like ?;`,[semester, professor_name, `%${sub_name}%`])
-                    res.status(200).send(result);
+                    return res.status(200).send(result);
                 } else{
                     const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                     from subject s join professortable p on s.professor_id = p.id
                     where s.semester = ? and p.name = ? and s.name = ? and s.major_area = ?;`,
                     [semester, professor_name, `%${sub_name}%`, major_area])
-                    res.status(200).send(result);
+                    return res.status(200).send(result);
                 }
             }
         } else{
@@ -752,14 +691,14 @@ router.post('/', async (req, res) =>{
                         from professortable p join subject s on p.id = s.professor_id
                         join enrollment e on s.sub_code = e.sub_code
                         where e.student_id = ? and s.semester = ?;`,[token.id, semester])
-                        res.status(200).send(result);
+                        return res.status(200).send(result);
                     } else{
                         const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                         from professortable p join subject s on p.id = s.professor_id
                         join enrollment e on s.sub_code = e.sub_code
                         where e.student_id = ? and s.semester = ? and s.major_area = ?;`,
                         [token.id, semester, major_area])
-                        res.status(200).send(result);
+                        return res.status(200).send(result);
                     }
                 } else{
                     if(major_area.length == 0){
@@ -768,14 +707,14 @@ router.post('/', async (req, res) =>{
                         join enrollment e on s.sub_code = e.sub_code
                         where e.student_id = ? and s.semester = ? and p.name = ?;`,
                         [token.id, semester, professor_name])
-                        res.status(200).send(result);
+                        return res.status(200).send(result);
                     } else{
                         const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                         from professortable p join subject s on p.id = s.professor_id
                         join enrollment e on s.sub_code = e.sub_code
                         where e.student_id = ? and s.semester = ? and s.major_area = ? and p.name = ?;`,
                         [token.id, semester, major_area, professor_name])
-                        res.status(200).send(result);
+                        return res.status(200).send(result);
                     }
                 }
             } else{
@@ -786,14 +725,14 @@ router.post('/', async (req, res) =>{
                         join enrollment e on s.sub_code = e.sub_code
                         where e.student_id = ? and s.semester = ? and s.name = ?;`,
                         [token.id, semester, `%${sub_name}%`])
-                        res.status(200).send(result);
+                        return res.status(200).send(result);
                     } else{
                         const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                         from professortable p join subject s on p.id = s.professor_id
                         join enrollment e on s.sub_code = e.sub_code
                         where e.student_id = ? and s.semester = ? and s.name = ? and s.major_area = ?;`,
                         [token.id, semester, `%${sub_name}%`, major_area])
-                        res.status(200).send(result);
+                        return res.status(200).send(result);
                     }
                 } else{
                     if(major_area.length == 0){
@@ -802,14 +741,14 @@ router.post('/', async (req, res) =>{
                         join enrollment e on s.sub_code = e.sub_code
                         where e.student_id = ? and s.semester = ? and s.name = ? and p.name = ?;`,
                         [token.id, semester, `%${sub_name}%`, professor_name])
-                        res.status(200).send(result);
+                        return res.status(200).send(result);
                     } else{
                         const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                         from professortable p join subject s on p.id = s.professor_id
                         join enrollment e on s.sub_code = e.sub_code
                         where e.student_id = ? and s.semester = ? and s.name = ? and s.major_area = ? and p.name = ?;`,
                         [token.id, semester, `%${sub_name}%`, major_area, professor_name])
-                        res.status(200).send(result);
+                        return res.status(200).send(result);
                     }
                 }
             }

@@ -44,14 +44,14 @@ router.post('/find_id', async (req, res) => {
         const [result] = await db.promise().query(`SELECT id FROM studenttable 
         WHERE name = ? AND email = ?`,[name,email]);
         if(result.length > 0){
-            res.status(200).send(result[0]);
+            return res.status(200).send(result[0]);
         } else{
             const [result2] = await db.promise().query(`SELECT id FROM professortable 
             WHERE name = ? AND email = ?`, [name,email]);
             if(result2.length > 0){
-                res.status(200).send(result2[0]);
+                return res.status(200).send(result2[0]);
             } else{
-                res.sendStatus(401);
+                return res.sendStatus(401);
             }
         }
     } catch (err) {
@@ -95,11 +95,11 @@ router.post('/change_pw', async (req, res) =>{
         let id = req.body.id;
         if(author == 1){
             db.promise().query(`update studenttable set password = ? where id=?`,[password, id]);
-            res.sendStatus(200);
+            return res.sendStatus(200);
             
         }else{
             db.promise().query(`update professortable set password = ? where id=?`, [password, id])
-            res.sendStatus(201);
+            return res.sendStatus(201);
         }
     } catch(err){
         throw err;
@@ -141,15 +141,15 @@ router.post('/find_pw', async (req, res) =>{
         const [result] = await db.promise().query(`SELECT * FROM studenttable 
         WHERE id = ? AND email = ?`, [id,email])
         if(result.length > 0){
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }else{
             const [result2] = await db.promise().query(`select * from professortable 
             where id = ? and email = ?`, [id,email])
             if(result2.length > 0){
-                res.sendStatus(201);
+                return res.sendStatus(201);
             }
             else{
-                res.sendStatus(401);
+                return res.sendStatus(401);
             }
         }
     }
@@ -230,7 +230,7 @@ router.post('/', async (req, res) =>{
             const accesstoken = jwt.sign(result);
             res.cookie('accesstoken', accesstoken);
             const {author, ...info} = result[0];
-            res.status(200).send(info);
+            return res.status(200).send(info);
         }else{
             const [result2] = await db.promise().query(`SELECT id, name, author FROM professortable
             WHERE id = ? AND password = ?`, [id,password])
@@ -238,10 +238,10 @@ router.post('/', async (req, res) =>{
                 let accesstoken = jwt.sign(result2);
                 res.cookie('accesstoken', accesstoken);
                 const {author, ...info} = result2[0];
-            res.status(201).send(info);
+            return res.status(201).send(info);
             }
             else{
-                res.sendStatus(401);
+                return res.sendStatus(401);
             }
         }
     }

@@ -32,10 +32,10 @@ router.post('/id_check', async (req, res) =>{
         const [result] = await db.promise().query(`SELECT * FROM studenttable
         WHERE id = ?`, [student_id])
         if(result.length > 0){
-            res.sendStatus(409);
+            return res.sendStatus(409);
         }
         else{
-            res.sendStatus(200);
+            return res.sendStatus(200);
         }
     }
     catch(err){
@@ -90,7 +90,7 @@ router.post('/', async (req, res) =>{
         values(?,?,?,?,?,?,?,?);`,
         [student.id,student.password,student.name,student.school_name,student.major,student.email,student.phone_number,2], 
         )
-        res.sendStatus(200);
+        return res.sendStatus(200);
     }
     catch(err){
         throw err;
