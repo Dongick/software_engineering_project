@@ -52,10 +52,10 @@ router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
             let semester = req.params.semesterID;
             let noticeid = req.params.noticeID - 1;
             db.promise().query(`delete from notice where id = (select id from
-            (select id from notice 
-            where professor_name=? and semester=? and sub_code = ?
-            order by id limit ?,1) tmp);`,
-            [token.name, semester, sub_code, noticeid])
+                (select id from notice where professor_name=? and semester=? and sub_code = ?
+                order by id limit ?,1) tmp);`,
+                [token.name, semester, sub_code, noticeid]
+            );
             return res.sendStatus(200);
         }
     }
@@ -222,21 +222,21 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
             const userid = token.id;
             if(token.author == 1){
                 const [id] = await db.promise().query(`select n.id as id
-                from enrollment e join notice n
-                on e.sub_code = n.sub_code and e.semester = n.semester
-                where e.student_id = ? and e.semester = ? and e.sub_code = ?
-                order by n.id limit ?,1`,[userid, semester,sub_code,noticeid])
+                    from enrollment e join notice n
+                    on e.sub_code = n.sub_code and e.semester = n.semester
+                    where e.student_id = ? and e.semester = ? and e.sub_code = ?
+                    order by n.id limit ?,1`,[userid, semester,sub_code,noticeid]
+                );
                 const notice_id = id[0].id;
-                const view_check = await db.promise().query(`select * from notice_view where notice_id = ? and student_id = ?`,
-                [notice_id, userid])
+                const view_check = await db.promise().query(`select * from notice_view where notice_id = ? and student_id = ?`, [notice_id, userid]);
                 if(view_check[0].length > 0){
                     const file = await notice_function.select_noticefile(notice_id);
                     const notice = await notice_function.select_notice(notice_id);
                     const result = await notice_function.notice_info(notice, file);
                     return res.status(200).send(result);
                 } else{
-                    db.promise().query(`update notice set view = view + 1 where id = ?`,[notice_id])
-                    db.promise().query(`insert into notice_view(notice_id, user_id) values(?,?)`,[notice_id,userid])
+                    db.promise().query(`update notice set view = view + 1 where id = ?`,[notice_id]);
+                    db.promise().query(`insert into notice_view(notice_id, user_id) values(?,?)`,[notice_id,userid]);
                     const file = await notice_function.select_noticefile(notice_id);
                     const notice = await notice_function.select_notice(notice_id);
                     const result = await notice_function.notice_info(notice, file);
@@ -367,15 +367,17 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             let semester = req.params.semesterID;
             if(token.author == 1){
                 const [result] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, n.created_time, n.view, n.semester
-                from enrollment e join notice n
-                on e.sub_code = n.sub_code and e.semester = n.semester
-                where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
-                [token.id, semester,sub_code])
+                    from enrollment e join notice n
+                    on e.sub_code = n.sub_code and e.semester = n.semester
+                    where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
+                    [token.id, semester,sub_code]
+                );
                 return res.status(200).send(result);
             } else{
                 const [result] = await db.promise().query(`select id, sub_code, professor_name, title, writer, created_time, view, semester
-                from notice where professor_name = ? and semester = ? and sub_code = ? order by id`,
-                [token.name, semester,sub_code])
+                    from notice where professor_name = ? and semester = ? and sub_code = ? order by id`,
+                    [token.name, semester,sub_code]
+                );
                 return res.status(201).send(result);
             }
         }
@@ -450,7 +452,7 @@ router.post('/:subjectID/:semesterID/:noticeID/update', upload.array('files'), a
             let title = req.body.title;
             let content = req.body.content;
             let files = req.files;
-            const notice_id = await notice_function.select_noticeid(token.name, semester,sub_code,noticeid)
+            const notice_id = await notice_function.select_noticeid(token.name, semester,sub_code,noticeid);
             db.promise().query(`update notice set title=?, content=? where id=?`, [title, content, notice_id]);
             const [result2] = await notice_function.select_noticefile(notice_id);
             if(result2.length > 0){
@@ -532,9 +534,10 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
             let content = req.body.content;
             let files = req.files;
             await db.promise().query(`insert into 
-            notice(sub_code,professor_name,title,content,writer,semester)
-            values (?,?,?,?,?,?);`,
-            [sub_code,token.name,title,content,token.name,semester])
+                notice(sub_code,professor_name,title,content,writer,semester)
+                values (?,?,?,?,?,?);`,
+                [sub_code,token.name,title,content,token.name,semester]
+            );
             if(files){
                 const file_info = files.map(file => [file.originalname, file.buffer]);
                 const [result] = await db.promise().query(`select id from notice order by id desc limit 1;`,);

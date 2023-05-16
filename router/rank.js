@@ -58,12 +58,13 @@ router.get('/', async (req, res) =>{
         } else{
             const [student_info] = await db.promise().query(`select school_name, major, id student_id, name student_name from studenttable where id = ?`, [token.id]);
             const [semester] = await db.promise().query(`select e.semester from enrollment e group by e.semester
-            having count(*) = (select count(*) from enrollment en where en.grade is not null and en.semester = e.semester) order by e.semester desc limit 1`);
+                having count(*) = (select count(*) from enrollment en where en.grade is not null and en.semester = e.semester) order by e.semester desc limit 1`
+            );
             const last_semester = semester.map((s) => s.semester)
             const [total_student] = await db.promise().query(`select count(distinct student_id) total_student from enrollment where semester = ?`, [last_semester]);
-            console.log(total_student);
             const [rank_info] = await db.promise().query(`select student_id, average_score
-            from score where semester = ? order by average_score desc`, [last_semester]);
+                from score where semester = ? order by average_score desc`, [last_semester]
+            );
             let rank = 1;
             const infos = rank_info.map((r) => [r.student_id, r.average_score]);
             for(info of infos){

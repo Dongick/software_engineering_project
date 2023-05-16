@@ -52,10 +52,11 @@ router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res
             let semester = req.params.semesterID;
             let lecture_materialid = req.params.lecture_materialID - 1;
             db.promise().query(`delete from lecture_material where id = (select id from
-            (select id from lecture_material 
-            where professor_name=? and semester=? and sub_code = ?
-            order by id limit ?,1) tmp);`,
-            [token.name, semester, sub_code, lecture_materialid])
+                (select id from lecture_material 
+                where professor_name=? and semester=? and sub_code = ?
+                order by id limit ?,1) tmp);`,
+                [token.name, semester, sub_code, lecture_materialid]
+            );
             return res.sendStatus(200);
         }
     }
@@ -222,10 +223,11 @@ router.get('/:subjectID/:semesterID/:lecture_materialID', async (req, res) => {
             const userid = token.id;
             if(token.author == 1){
                 const [id] = await db.promise().query(`select n.id as id
-                from enrollment e join lecture_material n
-                on e.sub_code = n.sub_code and e.semester = n.semester
-                where e.student_id = ? and e.semester = ? and e.sub_code = ?
-                order by n.id limit ?,1`,[userid, semester,sub_code,lecture_materialid])
+                    from enrollment e join lecture_material n
+                    on e.sub_code = n.sub_code and e.semester = n.semester
+                    where e.student_id = ? and e.semester = ? and e.sub_code = ?
+                    order by n.id limit ?,1`,[userid, semester,sub_code,lecture_materialid]
+                );
                 const lecture_material_id = id[0].id;
                 const view_check = await db.promise().query(`select * from lecture_material_view where lecture_material_id = ? and student_id = ?`,
                 [lecture_material_id, userid])
@@ -367,15 +369,17 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             let semester = req.params.semesterID;
             if(token.author == 1){
                 const [result] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, n.created_time, n.view, n.semester
-                from enrollment e join lecture_material n
-                on e.sub_code = n.sub_code and e.semester = n.semester
-                where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
-                [token.id, semester,sub_code])
+                    from enrollment e join lecture_material n
+                    on e.sub_code = n.sub_code and e.semester = n.semester
+                    where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
+                    [token.id, semester,sub_code]
+                );
                 return res.status(200).send(result);
             } else{
                 const [result] = await db.promise().query(`select id, sub_code, professor_name, title, writer, created_time, view, semester
-                from lecture_material where professor_name = ? and semester = ? and sub_code = ? order by id`,
-                [token.name, semester,sub_code])
+                    from lecture_material where professor_name = ? and semester = ? and sub_code = ? order by id`,
+                    [token.name, semester,sub_code]
+                );
                 return res.status(201).send(result);
             }
         }
@@ -449,9 +453,10 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
             let content = req.body.content;
             let files = req.files;
             await db.promise().query(`insert into 
-            lecture_material(sub_code,professor_name,title,content,writer,semester)
-            values (?,?,?,?,?,?);`,
-            [sub_code,token.name,title,content,token.name,semester])
+                lecture_material(sub_code,professor_name,title,content,writer,semester)
+                values (?,?,?,?,?,?);`,
+                [sub_code,token.name,title,content,token.name,semester]
+            );
             if(files){
                 const file_info = files.map(file => [file.originalname, file.buffer]);
                 const [result] = await db.promise().query(`select id from lecture_material order by id desc limit 1;`,);

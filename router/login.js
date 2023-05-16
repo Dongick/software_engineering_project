@@ -41,13 +41,11 @@ router.post('/find_id', async (req, res) => {
     try{
         let name = req.body.name;
         let email = req.body.email;
-        const [result] = await db.promise().query(`SELECT id FROM studenttable 
-        WHERE name = ? AND email = ?`,[name,email]);
+        const [result] = await db.promise().query(`SELECT id FROM studenttable WHERE name = ? AND email = ?`,[name,email]);
         if(result.length > 0){
             return res.status(200).send(result[0]);
         } else{
-            const [result2] = await db.promise().query(`SELECT id FROM professortable 
-            WHERE name = ? AND email = ?`, [name,email]);
+            const [result2] = await db.promise().query(`SELECT id FROM professortable WHERE name = ? AND email = ?`, [name,email]);
             if(result2.length > 0){
                 return res.status(200).send(result2[0]);
             } else{
@@ -98,7 +96,7 @@ router.post('/change_pw', async (req, res) =>{
             return res.sendStatus(200);
             
         }else{
-            db.promise().query(`update professortable set password = ? where id=?`, [password, id])
+            db.promise().query(`update professortable set password = ? where id=?`, [password, id]);
             return res.sendStatus(201);
         }
     } catch(err){
@@ -138,13 +136,11 @@ router.post('/find_pw', async (req, res) =>{
     try{
         let id = req.body.id;
         let email = req.body.email;
-        const [result] = await db.promise().query(`SELECT * FROM studenttable 
-        WHERE id = ? AND email = ?`, [id,email])
+        const [result] = await db.promise().query(`SELECT * FROM studenttable WHERE id = ? AND email = ?`, [id,email]);
         if(result.length > 0){
             return res.sendStatus(200);
         }else{
-            const [result2] = await db.promise().query(`select * from professortable 
-            where id = ? and email = ?`, [id,email])
+            const [result2] = await db.promise().query(`select * from professortable where id = ? and email = ?`, [id,email]);
             if(result2.length > 0){
                 return res.sendStatus(201);
             }
@@ -224,16 +220,14 @@ router.post('/', async (req, res) =>{
     try{
         let id = req.body.id;
         let password = req.body.password;
-        const [result] = await db.promise().query(`SELECT id, name, author FROM studenttable
-        WHERE id = ? AND password = ?`, [id,password])
+        const [result] = await db.promise().query(`SELECT id, name, author FROM studenttable WHERE id = ? AND password = ?`, [id,password]);
         if(result.length > 0){
             const accesstoken = jwt.sign(result);
             res.cookie('accesstoken', accesstoken);
             const {author, ...info} = result[0];
             return res.status(200).send(info);
         }else{
-            const [result2] = await db.promise().query(`SELECT id, name, author FROM professortable
-            WHERE id = ? AND password = ?`, [id,password])
+            const [result2] = await db.promise().query(`SELECT id, name, author FROM professortable WHERE id = ? AND password = ?`, [id,password]);
             if(result2.length > 0){
                 let accesstoken = jwt.sign(result2);
                 res.cookie('accesstoken', accesstoken);

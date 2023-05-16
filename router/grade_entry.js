@@ -68,8 +68,9 @@ router.get('/:subjectID/:semesterID', async (req, res) =>{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             const [result] = await db.promise().query(`select s.semester, s.sub_code, s.name sub_name, e.student_id, st.name student_name, e.grade
-            from enrollment e join studenttable st on e.student_id = st.id
-            join subject s on s.sub_code = e.sub_code where s.sub_code = ? and s.semester = ? order by st.id`, [sub_code, semester]);
+                from enrollment e join studenttable st on e.student_id = st.id
+                join subject s on s.sub_code = e.sub_code where s.sub_code = ? and s.semester = ? order by st.id`, [sub_code, semester]
+            );
             return res.status(200).send(result);
         }
     }
@@ -142,9 +143,10 @@ router.post('/:subjectID/:semesterID', async (req, res) => {
                 let [result] = await db.promise().query(`select * from enrollment where student_id = ? and semester = ? and grade is null`, [student_id[i], semester]);
                 if(result.length == 0){
                     let [score] = await db.promise().query(`select e.grade, sum(s.credit) sum_credit from enrollment e join subject s
-                    on e.sub_code = s.sub_code and e.semester = s.semester 
-                    where e.student_id = ? and s.semester = ?
-                    group by e.student_id, e.semester, e.grade`, [student_id[i], semester]);
+                        on e.sub_code = s.sub_code and e.semester = s.semester 
+                        where e.student_id = ? and s.semester = ?
+                        group by e.student_id, e.semester, e.grade`, [student_id[i], semester]
+                    );
                     let totalCredit = score.reduce((acc, curr) => acc + parseInt(curr.sum_credit), 0);
                     let totalGrade = score.reduce((acc, curr) => acc + score_funciton.convert_grade(curr.grade) * parseInt(curr.sum_credit), 0);
                     let average_score = (totalGrade / totalCredit).toFixed(2);

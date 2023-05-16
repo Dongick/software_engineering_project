@@ -29,8 +29,7 @@ const db = require('../config/db');
 router.post('/id_check', async (req, res) =>{
     try{
         let student_id = req.body.id;
-        const [result] = await db.promise().query(`SELECT * FROM studenttable
-        WHERE id = ?`, [student_id])
+        const [result] = await db.promise().query(`SELECT * FROM studenttable WHERE id = ?`, [student_id]);
         if(result.length > 0){
             return res.sendStatus(409);
         }
@@ -86,10 +85,10 @@ router.post('/', async (req, res) =>{
     try{
         let student = req.body;
         const [result] = await db.promise().query(`insert into 
-        studenttable(id, password, name, school_name, major, email,phone_number, author)
-        values(?,?,?,?,?,?,?,?);`,
-        [student.id,student.password,student.name,student.school_name,student.major,student.email,student.phone_number,2], 
-        )
+            studenttable(id, password, name, school_name, major, email,phone_number, author)
+            values(?,?,?,?,?,?,?,?);`,
+            [student.id,student.password,student.name,student.school_name,student.major,student.email,student.phone_number,2]
+        );
         return res.sendStatus(200);
     }
     catch(err){

@@ -100,15 +100,17 @@ router.get('/', async (req, res) =>{
                 const [all_semester] = await db.promise().query(`select semester from enrollment where student_id = ? group by semester order by semester desc`, [userid]);
                 const semester = all_semester[0].semester
                 const [schedule] = await db.promise().query(`select sub.sub_code, sub.name sub_name, sub.time, sub.class, p.name professor_name 
-                from enrollment e join subject sub on e.sub_code = sub.sub_code and e.semester = sub.semester
-                join professortable p on p.id = sub.professor_id where e.student_id = ? and e.semester = ?`, [userid, semester]);
+                    from enrollment e join subject sub on e.sub_code = sub.sub_code and e.semester = sub.semester
+                    join professortable p on p.id = sub.professor_id where e.student_id = ? and e.semester = ?`, [userid, semester]
+                );
                 const [subject_notice] = await db.promise().query(`select date_format(updated_time, '%Y-%m-%d') date, category, name, title
-                from (select updated_time, '공지사항' as category, name, title from notice n join enrollment e on n.sub_code = e.sub_code and n.semester = e.semester
-                join subject s on e.sub_code = s.sub_code and e.semester = s.semester where e.student_id = ? and e.semester = ?
-                union all
-                select updated_time, '강의자료실' as category, name, title from lecture_material l join enrollment e on l.sub_code = e.sub_code and l.semester = e.semester
-                join subject s on e.sub_code = s.sub_code and e.semester = s.semester where e.student_id = ? and e.semester = ?)
-                as a order by updated_time desc limit 5`, [userid, semester, userid, semester]);
+                    from (select updated_time, '공지사항' as category, name, title from notice n join enrollment e on n.sub_code = e.sub_code and n.semester = e.semester
+                    join subject s on e.sub_code = s.sub_code and e.semester = s.semester where e.student_id = ? and e.semester = ?
+                    union all
+                    select updated_time, '강의자료실' as category, name, title from lecture_material l join enrollment e on l.sub_code = e.sub_code and l.semester = e.semester
+                    join subject s on e.sub_code = s.sub_code and e.semester = s.semester where e.student_id = ? and e.semester = ?)
+                    as a order by updated_time desc limit 5`, [userid, semester, userid, semester]
+                );
                 const result = {
                     "studnet": student,
                     "all_semester": all_semester,
@@ -235,15 +237,17 @@ router.post('/', async (req, res) =>{
                 const [student] = await db.promise().query(`select name, id from studenttable where id = ?`, [userid])
                 const [all_semester] = await db.promise().query(`select semester from enrollment where student_id = ? group by semester order by semester desc`, [userid]);
                 const [schedule] = await db.promise().query(`select sub.sub_code, sub.name sub_name, sub.time, sub.class, p.name professor_name 
-                from enrollment e join subject sub on e.sub_code = sub.sub_code and e.semester = sub.semester
-                join professortable p on p.id = sub.professor_id where e.student_id = ? and e.semester = ?`, [userid, semester]);
+                    from enrollment e join subject sub on e.sub_code = sub.sub_code and e.semester = sub.semester
+                    join professortable p on p.id = sub.professor_id where e.student_id = ? and e.semester = ?`, [userid, semester]
+                );
                 const [subject_notice] = await db.promise().query(`select date_format(updated_time, '%Y-%m-%d') date, category, name, title
-                from (select updated_time, '공지사항' as category, name, title from notice n join enrollment e on n.sub_code = e.sub_code and n.semester = e.semester
-                join subject s on e.sub_code = s.sub_code and e.semester = s.semester where e.student_id = ? and e.semester = ?
-                union all
-                select updated_time, '강의자료실' as category, name, title from lecture_material l join enrollment e on l.sub_code = e.sub_code and l.semester = e.semester
-                join subject s on e.sub_code = s.sub_code and e.semester = s.semester where e.student_id = ? and e.semester = ?)
-                as a order by updated_time desc limit 5`, [userid, semester, userid, semester]);
+                    from (select updated_time, '공지사항' as category, name, title from notice n join enrollment e on n.sub_code = e.sub_code and n.semester = e.semester
+                    join subject s on e.sub_code = s.sub_code and e.semester = s.semester where e.student_id = ? and e.semester = ?
+                    union all
+                    select updated_time, '강의자료실' as category, name, title from lecture_material l join enrollment e on l.sub_code = e.sub_code and l.semester = e.semester
+                    join subject s on e.sub_code = s.sub_code and e.semester = s.semester where e.student_id = ? and e.semester = ?)
+                    as a order by updated_time desc limit 5`, [userid, semester, userid, semester]
+                );
                 const result = {
                     "studnet": student,
                     "all_semester": all_semester,

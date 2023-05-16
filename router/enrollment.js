@@ -103,7 +103,9 @@ router.get('/', async (req, res) => {
         } else{
             const semester = await enrollment_function.select_semester();
             const [result] = await db.promise().query(`select s.sub_code, s.name sub_name, s.credit, s.time, s.class, p.name professor_name, s.major_area, s.classification, s.remain_seat
-            from subject s join professortable p on s.professor_id = p.id where s.semester = ?`, [semester]);
+                from subject s join professortable p on s.professor_id = p.id where s.semester = ?`,
+                [semester]
+            );
             const total_result = await enrollment_function.select_courselist(result, semester, token.id);
             return res.status(200).send(total_result);
         }
@@ -161,15 +163,18 @@ router.post('/insert', async (req, res) =>{
             if(remain_seat > 0){
                 let [same_subject] = await db.promise().query(`select sub_code from enrollment where sub_code = ? and semester = ? and student_id = ?`, [sub_code, semester, token.id]);
                 if(same_subject.length == 0){
-                    let [total_credit] = await db.promise().query(`select sum(s.credit) total_credit from subject s join enrollment e
-                    on s.sub_code = e.sub_code and s.semester = e.semester where e.student_id = ? and s.semester = ?`, [token.id, semester]);
+                    let [total_credit] = await db.promise().query(`select sum(s.credit) total_credit
+                        from subject s join enrollment e on s.sub_code = e.sub_code and s.semester = e.semester
+                        where e.student_id = ? and s.semester = ?`, [token.id, semester]
+                    );
                     total_credit = parseInt(total_credit[0].total_credit);
                     if(isNaN(total_credit)){
                         total_credit = 0;
                     }
                     if(total_credit + credit < 18){
                         let [times] = await db.promise().query(`select s.time from enrollment e join subject s on s.sub_code = e.sub_code and s.semester = e.semester
-                        where e.student_id = ? and s.semester = ?`, [token.id, semester]);
+                            where e.student_id = ? and s.semester = ?`, [token.id, semester]
+                        );
                         times = times.map(item => item.time.split(',')).flat();
                         time = time.split(',');
                         for(const value of time){
@@ -189,7 +194,6 @@ router.post('/insert', async (req, res) =>{
             } else{
                 return res.sendStatus(403);
             }
-            
         }
     }
     catch(err){
@@ -356,14 +360,18 @@ router.post('/', async (req, res) =>{
             let result;
             if(sub_name.length == 0){
                 [result] = await db.promise().query(`select s.name sub_name, s.credit, s.sub_code, s.semester, s.time, s.class, p.name professor_name, s.major_area, s.classification, s.remain_seat
-                from subject s join professortable p on s.professor_id = p.id where s.major_area = ? and s.semester = ?`, [major_area, semester]);
+                    from subject s join professortable p on s.professor_id = p.id where s.major_area = ? and s.semester = ?`, [major_area, semester]
+                );
             } else{
                 if(major_area.length == 0){
                     [result] = await db.promise().query(`select s.name sub_name, s.credit, s.sub_code, s.semester, s.time, s.class, p.name professor_name, s.major_area, s.classification, s.remain_seat
-                    from subject s join professortable p on s.professor_id = p.id where s.name like ? and s.semester = ?`, [`%${sub_name}%`, semester]);
+                        from subject s join professortable p on s.professor_id = p.id where s.name like ? and s.semester = ?`, [`%${sub_name}%`, semester]
+                    );
                 } else{
                     [result] = await db.promise().query(`select s.name sub_name, s.credit, s.sub_code, s.semester, s.time, s.class, p.name professor_name, s.major_area, s.classification, s.remain_seat
-                    from subject s join professortable p on s.professor_id = p.id where s.name like ? and s.major_area = ? and s.semester = ?`, [`%${sub_name}%`, major_area, semester]);
+                        from subject s join professortable p on s.professor_id = p.id where s.name like ? and s.major_area = ? and s.semester = ?`,
+                        [`%${sub_name}%`, major_area, semester]
+                    );
                 }
             }
             const total_result = await enrollment_function.select_courselist(result, semester, token.id);
