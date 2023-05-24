@@ -5,7 +5,20 @@ const jwt = require('../modules/jwt');
 
 /**
  * @openapi
- * /main:
+ * /lecture/{subjectID}/{semesterID}:
+ *  parameters:
+ *    - name: subjectID
+ *      in: path
+ *      required: true
+ *      description: 과목 코드
+ *      schema:
+ *        type: string
+ *    - name: semesterID
+ *      in: path
+ *      required: true
+ *      description: 년도-학기
+ *      schema:
+ *        type: string
  *  get:
  *    summary: 강의 세부정보
  *    description: 강의 세부정보
@@ -119,7 +132,7 @@ const jwt = require('../modules/jwt');
  *        description: access 토큰 만료
  */
 
-router.post('/:subjectID/:semesterID', async (req, res) => {
+router.get('/:subjectID/:semesterID', async (req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
@@ -152,7 +165,6 @@ router.post('/:subjectID/:semesterID', async (req, res) => {
                     const semester_subject = {
                         [semesters[i].semester]: subjects.map(({sub_name, sub_code, professor_name}) => ({sub_name, sub_code, professor_name}))
                     };
-                    console.log(semester_subject);
                     result.all_semester.push(semester_subject);
                 }
                 return res.status(200).send(result);
