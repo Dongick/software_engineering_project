@@ -355,10 +355,11 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *                type: string
  *                description: 평가방법비율
  *              textbook:
- *                type: object
+ *                type: array
  *                description: 교재
- *                properties:
- *                  '0':
+ *                items:
+ *                  type: object
+ *                  properties:
  *                    title:
  *                      type: string
  *                      description: 제목
@@ -371,39 +372,18 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *                    publish_year:
  *                      type: string
  *                      description: 출판일
- *                  '1':
- *                    title:
- *                      type: string
- *                      description: 제목
- *                    author:
- *                      type: string
- *                      description: 저자
- *                    publisher:
- *                      type: string
- *                      description: 출판사
- *                    publish_year:
- *                      type: string
- *                      description: 출판일
- *                  # 이하 생략(textbook 다른 항목들도 동일한 방식으로 정의)
  *              lec_schedule:
- *                type: object
+ *                type: array
  *                description: 강의일정
- *                properties:
- *                  '0':
+ *                items:
+ *                  type: object
+ *                  properties:
  *                    week:
  *                      type: string
  *                      description: 주차
  *                    content:
  *                      type: string
  *                      description: 주차별 설명
- *                  '1':
- *                    week:
- *                      type: string
- *                      description: 주차
- *                    content:
- *                      type: string
- *                      description: 주차별 설명
- *                  # 이하 생략(lec_schedule의 다른 항목들도 동일한 방식으로 정의)
  *    responses:
  *      '200':
  *        description: 공지사항 생성 성공

@@ -161,7 +161,7 @@ router.get('/', async (req, res) =>{
                     as a order by updated_time desc limit 5`, [userid, semester, userid, semester]
                 );
                 const result = {
-                    "studnet": student,
+                    "student": student,
                     "all_semester": all_semester,
                     "semester": semester,
                     "schedule": schedule,
@@ -359,7 +359,7 @@ router.post('/', async (req, res) =>{
                     as a order by updated_time desc limit 5`, [userid, semester, userid, semester]
                 );
                 const result = {
-                    "studnet": student,
+                    "student": student,
                     "all_semester": all_semester,
                     "semester": semester,
                     "schedule": schedule,

@@ -87,9 +87,9 @@ router.post('/', async (req, res) =>{
     try{
         let student = req.body;
         const [result] = await db.promise().query(`insert into 
-            studenttable(id, password, name, school_name, major, email,phone_number, author)
-            values(?,?,?,?,?,?,?,?);`,
-            [student.id,student.password,student.name,student.univ,student.major,student.email,student.phNum,1]
+            studenttable(id, password, name, school_name, major, email,phone_number)
+            values(?,?,?,?,?,?,?);`,
+            [student.id,student.password,student.name,student.univ,student.major,student.email,student.phNum]
         );
         return res.sendStatus(200);
     }
