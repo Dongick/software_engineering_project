@@ -28,8 +28,10 @@ const db = require('../config/db');
 
 router.post('/id_check', async (req, res) =>{
     try{
+        console.log(req.body);
         let student_id = req.body.id;
         const [result] = await db.promise().query(`SELECT * FROM studenttable WHERE id = ?`, [student_id]);
+        console.log(result.length);
         if(result.length > 0){
             return res.sendStatus(409);
         }
@@ -87,7 +89,7 @@ router.post('/', async (req, res) =>{
         const [result] = await db.promise().query(`insert into 
             studenttable(id, password, name, school_name, major, email,phone_number, author)
             values(?,?,?,?,?,?,?,?);`,
-            [student.id,student.password,student.name,student.school_name,student.major,student.email,student.phone_number,2]
+            [student.id,student.password,student.name,student.univ,student.major,student.email,student.phNum,1]
         );
         return res.sendStatus(200);
     }

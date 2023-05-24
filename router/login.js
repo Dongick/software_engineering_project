@@ -91,6 +91,7 @@ router.post('/change_pw', async (req, res) =>{
         let password = req.body.password;
         let author = req.body.author;
         let id = req.body.id;
+        console.log(req.body);
         if(author == 1){
             db.promise().query(`update studenttable set password = ? where id=?`,[password, id]);
             return res.sendStatus(200);

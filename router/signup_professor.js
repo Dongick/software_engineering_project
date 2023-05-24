@@ -87,7 +87,7 @@ router.post('/', async (req, res) => {
         const [result] = await db.promise().query(`insert into 
             professortable(id, password, name, school_name, major, email,phone_number, author)
             values(?,?,?,?,?,?,?,?);`,
-            [professor.id,professor.password,professor.name,professor.school_name,professor.major,professor.email,professor.phone_number,2]
+            [professor.id,professor.password,professor.name,professor.univ,professor.major,professor.email,professor.phNum,2]
         );
         return res.sendStatus(200);
     }

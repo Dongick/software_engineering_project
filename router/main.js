@@ -42,7 +42,7 @@ const jwt = require('../modules/jwt');
  *                        description: 학기
  *                semester:
  *                  type: string
- *                  description: 학기
+ *                  description: 현재 학기
  *                schedule:
  *                  type: array
  *                  description: 시간표
@@ -82,6 +82,55 @@ const jwt = require('../modules/jwt');
  *                      title:
  *                        type: string
  *                        description: 제목
+ *      '201':
+ *        description: 교수일 때 로그인 직후 메인화면
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                professor:
+ *                  type: array
+ *                  description: 교수 정보
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      name:
+ *                        type: string
+ *                        description: 이름
+ *                      id:
+ *                        type: integer
+ *                        description: 학번
+ *                all_semester:
+ *                  type: array
+ *                  description: 담당한 전체 학기
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      semester:
+ *                        type: string
+ *                        description: 학기
+ *                semester:
+ *                  type: string
+ *                  description: 현재 학기
+ *                schedule:
+ *                  type: array
+ *                  description: 시간표
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목명
+ *                      time:
+ *                        type: string
+ *                        description: 수업 시간
+ *                      class:
+ *                        type: string
+ *                        description: 강의실
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -96,9 +145,9 @@ router.get('/', async (req, res) =>{
         } else{
             const userid = token.id;
             if(token.author == 1){
-                const [student] = await db.promise().query(`select name, id from studenttable where id = ?`, [userid])
+                const [student] = await db.promise().query(`select name, id from studenttable where id = ?`, [userid]);
                 const [all_semester] = await db.promise().query(`select semester from enrollment where student_id = ? group by semester order by semester desc`, [userid]);
-                const semester = all_semester[0].semester
+                const semester = all_semester[0].semester;
                 const [schedule] = await db.promise().query(`select sub.sub_code, sub.name sub_name, sub.time, sub.class, p.name professor_name 
                     from enrollment e join subject sub on e.sub_code = sub.sub_code and e.semester = sub.semester
                     join professortable p on p.id = sub.professor_id where e.student_id = ? and e.semester = ?`, [userid, semester]
@@ -117,10 +166,22 @@ router.get('/', async (req, res) =>{
                     "semester": semester,
                     "schedule": schedule,
                     "subject_notice": subject_notice
-                }
+                };
                 return res.status(200).send(result);
             } else{
-
+                const [professor] = await db.promise().query(`select name, id from professortable where id = ?`, [userid]);
+                const [all_semester] = await db.promise().query(`select semester from subject where professor_id = ? group by semester order by semester desc`, [userid]);
+                const semester = all_semester[0].semester;
+                const [schedule] = await db.promise().query(`select sub_code, name, time, class
+                    from subject where professor_id = ? and semester = ?`, [userid, semester]
+                );
+                const result = {
+                    "professor": professor,
+                    "all_semester": all_semester,
+                    "semester": semester,
+                    "schedule": schedule
+                };
+                return res.status(201).send(result);
             }
         }
     }
@@ -179,7 +240,7 @@ router.get('/', async (req, res) =>{
  *                        description: 학기
  *                semester:
  *                  type: string
- *                  description: 학기
+ *                  description: 선택한 학기
  *                schedule:
  *                  type: array
  *                  description: 시간표
@@ -219,6 +280,55 @@ router.get('/', async (req, res) =>{
  *                      title:
  *                        type: string
  *                        description: 제목
+ *      '201':
+ *        description: 교수일 때 학기를 선택한 메인화면
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                student:
+ *                  type: array
+ *                  description: 학생 정보
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      name:
+ *                        type: string
+ *                        description: 이름
+ *                      id:
+ *                        type: integer
+ *                        description: 학번
+ *                all_semester:
+ *                  type: array
+ *                  description: 담당한 전체 학기
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      semester:
+ *                        type: string
+ *                        description: 학기
+ *                semester:
+ *                  type: string
+ *                  description: 선택한 학기
+ *                schedule:
+ *                  type: array
+ *                  description: 시간표
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목명
+ *                      time:
+ *                        type: string
+ *                        description: 수업 시간
+ *                      class:
+ *                        type: string
+ *                        description: 강의실
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -257,7 +367,18 @@ router.post('/', async (req, res) =>{
                 }
                 return res.status(200).send(result);
             } else{
-
+                const [professor] = await db.promise().query(`select name, id from professortable where id = ?`, [userid]);
+                const [all_semester] = await db.promise().query(`select semester from subject where professor_id = ? group by semester order by semester desc`, [userid]);
+                const [schedule] = await db.promise().query(`select sub_code, name, time, class
+                    from subject where professor_id = ? and semester = ?`, [userid, semester]
+                );
+                const result = {
+                    "professor": professor,
+                    "all_semester": all_semester,
+                    "semester": semester,
+                    "schedule": schedule
+                };
+                return res.status(201).send(result);
             }
         }
     }
