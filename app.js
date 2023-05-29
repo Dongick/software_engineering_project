@@ -18,6 +18,7 @@ const rankRouter = require('./router/rank');
 const information_checkRouter = require('./router/information_check');
 const lecture_materialRouter = require('./router/lecture_material');
 const lectureRouter = require('./router/lecture');
+const assignmentRouter = require('./router/assignment');
 
 const swaggerUi = require('swagger-ui-express');
 const specs = require('./swagger');
@@ -47,6 +48,7 @@ app.use('/rank', rankRouter);
 app.use('/information_check', information_checkRouter);
 app.use('/lecture_material', lecture_materialRouter);
 app.use('/lecture', lectureRouter);
+app.use('/assignment', assignmentRouter);
 app.use('/', mainRouter);
 
 app.listen(port, () => {
