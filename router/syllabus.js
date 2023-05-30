@@ -25,8 +25,8 @@ const jwt = require('../modules/jwt');
  *    security:
  *      - CookieAuth: []
  *    responses:
- *      '200':
- *        description: 의계획서 생성시 초기 정보 전송
+ *      '201':
+ *        description: 강의계획서 생성시 초기 정보 전송
  *        content:
  *          application/json:
  *            schema:
@@ -78,7 +78,7 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
                 from subject s join professortable p on s.professor_id = p.id
                 where s.sub_code = ? and s.semester = ?`, [sub_code, semester]
             );
-            return res.status(200).send(subject_professor_info);
+            return res.status(201).send(subject_professor_info);
         }
     }
     catch(err){
@@ -385,8 +385,8 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *                      type: string
  *                      description: 주차별 설명
  *    responses:
- *      '200':
- *        description: 공지사항 생성 성공
+ *      '201':
+ *        description: 강의계획서 생성 성공
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -425,7 +425,7 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
             db.promise().query(`insert into syllabus_textbook(syllabus_id, textbook_id) values ?`, [syllabus_textbook_info]);
             const lecture_schedule_info = Object.values(lecture_schedule).map(lec => [syllabus_id[0].id, lec.week, lec.content]);
             db.promise().query(`insert into lecture_schedule(syllabus_id, week, content) values ?`, [lecture_schedule_info]);
-            return res.sendStatus(200);
+            return res.sendStatus(201);
         }
     }
     catch(err){
@@ -507,8 +507,8 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
  *                      type: string
  *                      description: 주차별 설명
  *    responses:
- *      '200':
- *        description: 공지사항 생성 성공
+ *      '201':
+ *        description: 강의계획서 수정 성공
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -548,7 +548,7 @@ router.post('/:subjectID/:semesterID/update', async(req, res) => {
             db.promise().query(`insert into syllabus_textbook(syllabus_id, textbook_id) values ?`, [syllabus_textbook_info]);
             const lecture_schedule_info = Object.values(lecture_schedule).map(lec => [syllabus_id[0].id, lec.week, lec.content]);
             db.promise().query(`insert into lecture_schedule(syllabus_id, week, content) values ?`, [lecture_schedule_info]);
-            return res.sendStatus(200);
+            return res.sendStatus(201);
         }
     }
     catch(err){

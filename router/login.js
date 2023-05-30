@@ -24,7 +24,17 @@ const jwt = require('../modules/jwt');
  *                description: 이메일
  *    responses:
  *      '200':
- *        description: 아이디 찾기 성공
+ *        description: 학생 아이디 찾기 성공
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id:
+ *                  type: integer
+ *                  description: 학번
+ *      '201':
+ *        description: 교수 아이디 찾기 성공
  *        content:
  *          application/json:
  *            schema:
@@ -47,7 +57,7 @@ router.post('/find_id', async (req, res) => {
         } else{
             const [result2] = await db.promise().query(`SELECT id FROM professortable WHERE name = ? AND email = ?`, [name,email]);
             if(result2.length > 0){
-                return res.status(200).send(result2[0]);
+                return res.status(201).send(result2[0]);
             } else{
                 return res.sendStatus(401);
             }

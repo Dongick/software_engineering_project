@@ -175,10 +175,34 @@ router.post('/insert', async (req, res) =>{
                         let [times] = await db.promise().query(`select s.time from enrollment e join subject s on s.sub_code = e.sub_code and s.semester = e.semester
                             where e.student_id = ? and s.semester = ?`, [token.id, semester]
                         );
-                        times = times.map(item => item.time.split(',')).flat();
-                        time = time.split(',');
-                        for(const value of time){
-                            if(times.includes(value)){
+                        times = times.map(item => item.time.split('/')).flat();
+                        const checkTimesArr = []
+
+                        for(const timeArr of times){
+                            const weekday = timeArr[0];;
+                            const hoursStr = timeArr.slice(1);
+                            const numbers = hoursStr.split(',');
+                            for (const number of numbers) {
+                                const hour = weekday + number;
+                                checkTimesArr.push(hour);
+                            }
+                        }
+
+                        time = time.split('/');
+                        const timesArr = []
+
+                        for(const timeArr of time){
+                            const weekday = timeArr[0];;
+                            const hoursStr = timeArr.slice(1);
+                            const numbers = hoursStr.split(',');
+                            for (const number of numbers) {
+                                const hour = weekday + number;
+                                timesArr.push(hour);
+                            }
+                        }
+
+                        for(const value of checkTimesArr){
+                            if(timesArr.includes(value)){
                                 return res.sendStatus(409);
                             }
                         }

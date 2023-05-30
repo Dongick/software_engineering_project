@@ -34,7 +34,7 @@ const upload = multer();
  *    security:
  *      - CookieAuth: []
  *    responses:
- *      '200':
+ *      '201':
  *        description: 공지사항 삭제 성공
  *      '401':
  *        description: 잘못된 access 토큰
@@ -56,7 +56,7 @@ router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
                 order by id limit ?,1) tmp);`,
                 [token.name, semester, sub_code, noticeid]
             );
-            return res.sendStatus(200);
+            return res.sendStatus(201);
         }
     }
     catch(err){
@@ -432,7 +432,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *                format: binary
  *                description: 파일
  *    responses:
- *      '200':
+ *      '201':
  *        description: 공지사항 수정 성공
  *      '401':
  *        description: 잘못된 access 토큰
@@ -462,7 +462,7 @@ router.post('/:subjectID/:semesterID/:noticeID/update', upload.array('files'), a
                 const file_info = files.map(file => [file.originalname, file.buffer]);
                 notice_function.insert_noticefile(notice_id, file_info);
             }
-            return res.sendStatus(200);
+            return res.sendStatus(201);
         }
     }
     catch(err){
@@ -514,7 +514,7 @@ router.post('/:subjectID/:semesterID/:noticeID/update', upload.array('files'), a
  *              - title
  *              - content
  *    responses:
- *      '200':
+ *      '201':
  *        description: 공지사항 생성 성공
  *      '401':
  *        description: 잘못된 access 토큰
@@ -544,7 +544,7 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
                 const notice_id = result[0].id
                 notice_function.insert_noticefile(notice_id, file_info);
             }
-            return res.sendStatus(200);
+            return res.sendStatus(201);
         }
     }
     catch(err){

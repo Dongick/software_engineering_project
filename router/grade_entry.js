@@ -26,7 +26,7 @@ const score_funciton = require('../modules/score_function');
  *    security:
  *      - CookieAuth: []
  *    responses:
- *      '200':
+ *      '201':
  *        description: 성적 입력 페이지
  *        content:
  *          application/json:
@@ -71,7 +71,7 @@ router.get('/:subjectID/:semesterID', async (req, res) =>{
                 from enrollment e join studenttable st on e.student_id = st.id
                 join subject s on s.sub_code = e.sub_code where s.sub_code = ? and s.semester = ? order by st.id`, [sub_code, semester]
             );
-            return res.status(200).send(result);
+            return res.status(201).send(result);
         }
     }
     catch(err){
@@ -120,7 +120,7 @@ router.get('/:subjectID/:semesterID', async (req, res) =>{
  *                  type: string
  *                  example: [A+, A, B+]
  *    responses:
- *      '200':
+ *      '201':
  *        description: 성적 입력 성공
  *      '401':
  *        description: 잘못된 access 토큰
@@ -158,7 +158,7 @@ router.post('/:subjectID/:semesterID', async (req, res) => {
                     }
                 }
             }
-            return res.sendStatus(200);
+            return res.sendStatus(201);
         }
     }
     catch(err){

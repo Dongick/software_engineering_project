@@ -126,8 +126,10 @@ router.post('/change_pw', async(req, res) =>{
             const password = req.body.password;
             if(token.author == 1){
                 db.promise().query('update studenttable set password = ? where id = ?', [password, token.id]);
+                return res.sendStatus(200);
             } else{
-                b.promise().query('update professortable set password = ? where id = ?', [password, token.id]);
+                db.promise().query('update professortable set password = ? where id = ?', [password, token.id]);
+                return res.sendStatus(201);
             }
         }
     }

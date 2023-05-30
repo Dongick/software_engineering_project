@@ -19,7 +19,7 @@ const db = require('../config/db');
  *                type: integer
  *                description: 학번
  *    responses:
- *      '200':
+ *      '201':
  *        description: 사용가능 아이디
  *      '409':
  *        description: 중복된 아이디
@@ -34,7 +34,7 @@ router.post('/id_check', async (req, res) =>{
             return res.sendStatus(409);
         }
         else{
-            return res.sendStatus(200);
+            return res.sendStatus(201);
         }
     }
     catch(err){
@@ -77,7 +77,7 @@ router.post('/id_check', async (req, res) =>{
  *                type: string
  *                description: 전화번호
  *    responses:
- *      '200':
+ *      '201':
  *        description: 회원가입 성공
  */
 
@@ -89,7 +89,7 @@ router.post('/', async (req, res) => {
             values(?,?,?,?,?,?,?);`,
             [professor.id,professor.password,professor.name,professor.univ,professor.major,professor.email,professor.phNum]
         );
-        return res.sendStatus(200);
+        return res.sendStatus(201);
     }
     catch(err){
         throw err;
