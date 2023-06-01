@@ -28,10 +28,8 @@ const db = require('../config/db');
 
 router.post('/id_check', async (req, res) =>{
     try{
-        console.log(req.body);
         let student_id = req.body.id;
         const [result] = await db.promise().query(`SELECT * FROM studenttable WHERE id = ?`, [student_id]);
-        console.log(result.length);
         if(result.length > 0){
             return res.sendStatus(409);
         }

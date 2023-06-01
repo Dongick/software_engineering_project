@@ -52,7 +52,7 @@ const jwt = require('../modules/jwt');
  *                      sub_code:
  *                        type: string
  *                        description: 과목코드
- *                      sub_name:
+ *                      name:
  *                        type: string
  *                        description: 과목명
  *                      time:
@@ -139,13 +139,12 @@ const jwt = require('../modules/jwt');
 
 router.get('/', async (req, res) =>{
     try{
-        const token = jwt.verify(req.cookies['accesstoken']);
+        const token = jwt.verify(req.cookies['accesstoken']);   
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             const userid = token.id;
             if(token.author == 1){
-                const [student] = await db.promise().query(`select name, id from studenttable where id = ?`, [userid]);
                 const [all_semester] = await db.promise().query(`select semester from enrollment where student_id = ? group by semester order by semester desc`, [userid]);
                 const semester = all_semester[0].semester;
                 const [schedule] = await db.promise().query(`select sub.sub_code, sub.name sub_name, sub.time, sub.class, p.name professor_name 
@@ -161,7 +160,6 @@ router.get('/', async (req, res) =>{
                     as a order by updated_time desc limit 5`, [userid, semester, userid, semester]
                 );
                 const result = {
-                    "student": student,
                     "all_semester": all_semester,
                     "semester": semester,
                     "schedule": schedule,
@@ -169,14 +167,12 @@ router.get('/', async (req, res) =>{
                 };
                 return res.status(200).send(result);
             } else{
-                const [professor] = await db.promise().query(`select name, id from professortable where id = ?`, [userid]);
                 const [all_semester] = await db.promise().query(`select semester from subject where professor_id = ? group by semester order by semester desc`, [userid]);
                 const semester = all_semester[0].semester;
                 const [schedule] = await db.promise().query(`select sub_code, name, time, class
                     from subject where professor_id = ? and semester = ?`, [userid, semester]
                 );
                 const result = {
-                    "professor": professor,
                     "all_semester": all_semester,
                     "semester": semester,
                     "schedule": schedule
@@ -339,12 +335,11 @@ router.post('/', async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
-            res.sendStatus(token);
+            return res.sendStatus(token);
         } else{
             const userid = token.id;
             const semester = req.body.semester;
             if(token.author == 1){
-                const [student] = await db.promise().query(`select name, id from studenttable where id = ?`, [userid])
                 const [all_semester] = await db.promise().query(`select semester from enrollment where student_id = ? group by semester order by semester desc`, [userid]);
                 const [schedule] = await db.promise().query(`select sub.sub_code, sub.name sub_name, sub.time, sub.class, p.name professor_name 
                     from enrollment e join subject sub on e.sub_code = sub.sub_code and e.semester = sub.semester
@@ -359,7 +354,6 @@ router.post('/', async (req, res) =>{
                     as a order by updated_time desc limit 5`, [userid, semester, userid, semester]
                 );
                 const result = {
-                    "student": student,
                     "all_semester": all_semester,
                     "semester": semester,
                     "schedule": schedule,
@@ -367,13 +361,11 @@ router.post('/', async (req, res) =>{
                 }
                 return res.status(200).send(result);
             } else{
-                const [professor] = await db.promise().query(`select name, id from professortable where id = ?`, [userid]);
                 const [all_semester] = await db.promise().query(`select semester from subject where professor_id = ? group by semester order by semester desc`, [userid]);
                 const [schedule] = await db.promise().query(`select sub_code, name, time, class
                     from subject where professor_id = ? and semester = ?`, [userid, semester]
                 );
                 const result = {
-                    "professor": professor,
                     "all_semester": all_semester,
                     "semester": semester,
                     "schedule": schedule

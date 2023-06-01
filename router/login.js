@@ -101,7 +101,6 @@ router.post('/change_pw', async (req, res) =>{
         let password = req.body.password;
         let author = req.body.author;
         let id = req.body.id;
-        console.log(req.body);
         if(author == 1){
             db.promise().query(`update studenttable set password = ? where id=?`,[password, id]);
             return res.sendStatus(200);
@@ -241,12 +240,23 @@ router.post('/', async (req, res) =>{
             const [result2] = await db.promise().query(`SELECT id, name, author FROM professortable WHERE id = ? AND password = ?`, [id,password]);
             if(result2.length > 0){
                 let accesstoken = jwt.sign(result2);
-                res.cookie('accesstoken', accesstoken);
+                res.cookie('accesstoken', accesstoken, {
+                    httpOnly: true,
+                    sameSite: 'none',
+                    secure: true
+                });
                 const {author, ...info} = result2[0];
-            return res.status(201).send(info);
-            }
-            else{
-                return res.sendStatus(401);
+                return res.status(201).send(info);
+            } else{
+                const [result3] = await db.promise().query(`SELECT id, name, author FROM admintable WHERE id = ? AND password = ?`, [id,password]);
+                if(result3.length > 0){
+                    let accesstoken = jwt.sign(result3);
+                    res.cookie('accesstoken', accesstoken);
+                    const {author, ...info} = result3[0];
+                return res.status(202).send(info);
+                } else{
+                    return res.sendStatus(401);
+                }
             }
         }
     }

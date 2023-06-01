@@ -28,7 +28,10 @@ const port = 3001;
 
 app.use(helmet());
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+}));
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -49,7 +52,7 @@ app.use('/information_check', information_checkRouter);
 app.use('/lecture_material', lecture_materialRouter);
 app.use('/lecture', lectureRouter);
 app.use('/assignment', assignmentRouter);
-app.use('/', mainRouter);
+app.use('/main', mainRouter);
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
