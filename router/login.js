@@ -233,7 +233,11 @@ router.post('/', async (req, res) =>{
         const [result] = await db.promise().query(`SELECT id, name, author FROM studenttable WHERE id = ? AND password = ?`, [id,password]);
         if(result.length > 0){
             const accesstoken = jwt.sign(result);
-            res.cookie('accesstoken', accesstoken);
+            res.cookie('accesstoken', accesstoken, {
+                httpOnly: true,
+                sameSite: 'none',
+                secure: true
+            });
             const {author, ...info} = result[0];
             return res.status(200).send(info);
         }else{
@@ -242,8 +246,7 @@ router.post('/', async (req, res) =>{
                 let accesstoken = jwt.sign(result2);
                 res.cookie('accesstoken', accesstoken, {
                     httpOnly: true,
-                    sameSite: 'none',
-                    secure: true
+                    sameSite: 'none'
                 });
                 const {author, ...info} = result2[0];
                 return res.status(201).send(info);

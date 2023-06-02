@@ -74,11 +74,13 @@ router.get('/', async (req, res) =>{
         if (Number.isInteger(token)){
             return res.sendStatus(token);
         } else{
+            console.log("1");
             if(token.author == 1){
                 const [result] = await db.promise().query(`select id, name, school_name, major, email, phone_number from studenttable where id = ?`, [token.id]);
                 return res.status(200).send(result[0]);
             } else{
                 const [result] = await db.promise().query(`select id, name, school_name, major, email, phone_number from professortable where id = ?`, [token.id]);
+                console.log(result);
                 return res.status(201).send(result[0]);
             }
         }
