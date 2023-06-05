@@ -247,7 +247,7 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
                 const file = await notice_function.select_noticefile(notice_id);
                 const notice = await notice_function.select_notice(notice_id);
                 const result = await notice_function.notice_info(notice, file);
-                    return res.status(201).send(result);
+                return res.status(201).send(result);
             }
         }
     } catch(err){
@@ -304,6 +304,9 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
  *                  writer:
  *                    type: string
  *                    description: 작성자
+ *                  file_name:
+ *                    type: string
+ *                    description: 파일명
  *                  updated_time:
  *                    type: string
  *                    format: date-time
@@ -341,6 +344,9 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
  *                  writer:
  *                    type: string
  *                    description: 작성자
+ *                  file_name:
+ *                    type: string
+ *                    description: 파일명
  *                  updated_time:
  *                    type: string
  *                    format: date-time
@@ -366,16 +372,17 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             let sub_code = req.params.subjectID;
             let semester = req.params.semesterID;
             if(token.author == 1){
-                const [result] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, n.created_time, n.view, n.semester
-                    from enrollment e join notice n
-                    on e.sub_code = n.sub_code and e.semester = n.semester
+                const [result] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, nf.file_name, DATE_FORMAT(n.created_time, '%Y-%m-%d %H:%i:%s') n.created_time, n.view, n.semester
+                    from enrollment e join notice n on e.sub_code = n.sub_code and e.semester = n.semester
+                    join notice_file nf on nf.notice_id = n.id
                     where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
                     [token.id, semester,sub_code]
                 );
                 return res.status(200).send(result);
             } else{
-                const [result] = await db.promise().query(`select id, sub_code, professor_name, title, writer, created_time, view, semester
-                    from notice where professor_name = ? and semester = ? and sub_code = ? order by id`,
+                const [result] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, nf.file_name, DATE_FORMAT(n.created_time, '%Y-%m-%d %H:%i:%s') created_time, n.view, n.semester
+                    from notice n join notice_file nf on n.id = nf.notice_id
+                    where n.professor_name = ? and n.semester = ? and sub_code = ? order by n.id`,
                     [token.name, semester,sub_code]
                 );
                 return res.status(201).send(result);

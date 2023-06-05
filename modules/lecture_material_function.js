@@ -3,9 +3,8 @@ const db = require('../config/db');
 module.exports = {
     select_lecture_materialfile: async (lecture_material_uniqueid) => {
         try{
-            const [result] = await db.promise().query(`select file_name, file_data from lecture_material_file
-                where lecture_material_id = ?`,
-                [lecture_material_uniqueid]
+            const [result] = await db.promise().query(`select file_name
+                from lecture_material_file where lecture_material_id = ?`, [lecture_material_uniqueid]
             );
             return result;
         }

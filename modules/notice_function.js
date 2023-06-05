@@ -3,7 +3,7 @@ const db = require('../config/db');
 module.exports = {
     select_noticefile: async (notice_uniqueid) => {
         try{
-            const [result] = await db.promise().query(`select file_name, file_data
+            const [result] = await db.promise().query(`select file_name
                 from notice_file where notice_id = ?`, [notice_uniqueid]
             );
             return result;
@@ -14,7 +14,7 @@ module.exports = {
     },
     select_notice: async (notice_uniqueid) =>{
         try{
-            const [result] = await db.promise().query(`select sub_code,professor_name,title,content,writer,updated_time,view,semester
+            const [result] = await db.promise().query(`select sub_code,professor_name,title,content,writer,DATE_FORMAT(updated_time, '%Y-%m-%d %H:%i:%s') updated_time,view,semester
                 from notice where id = ?`, [notice_uniqueid]
             );
             return result[0];

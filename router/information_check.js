@@ -74,13 +74,11 @@ router.get('/', async (req, res) =>{
         if (Number.isInteger(token)){
             return res.sendStatus(token);
         } else{
-            console.log("1");
             if(token.author == 1){
                 const [result] = await db.promise().query(`select id, name, school_name, major, email, phone_number from studenttable where id = ?`, [token.id]);
                 return res.status(200).send(result[0]);
             } else{
                 const [result] = await db.promise().query(`select id, name, school_name, major, email, phone_number from professortable where id = ?`, [token.id]);
-                console.log(result);
                 return res.status(201).send(result[0]);
             }
         }
@@ -125,6 +123,8 @@ router.post('/change_pw', async(req, res) =>{
         if (Number.isInteger(token)){
             return res.sendStatus(token);
         } else{
+            console.log("good");
+            console.log(req.body);
             const password = req.body.password;
             if(token.author == 1){
                 db.promise().query('update studenttable set password = ? where id = ?', [password, token.id]);
@@ -179,7 +179,7 @@ router.post('/', async (req, res) => {
             return res.sendStatus(token);
         } else{
             const email = req.body.email;
-            const phone_number = req.body.phone_number;
+            const phone_number = req.body.phNum;
             if(token.author == 1){
                 db.promise().query(`update studenttable set email = ?, phone_number = ? where id = ?`, [email, phone_number, token.id]);
                 return res.sendStatus(200);

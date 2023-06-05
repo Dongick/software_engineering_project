@@ -103,9 +103,7 @@ router.get('/', async (req, res) => {
         } else{
             const semester = await enrollment_function.select_semester();
             const [result] = await db.promise().query(`select s.sub_code, s.name sub_name, s.credit, s.time, s.class, p.name professor_name, s.major_area, s.classification, s.remain_seat
-                from subject s join professortable p on s.professor_id = p.id where s.semester = ?`,
-                [semester]
-            );
+                from subject s join professortable p on s.professor_id = p.id where s.semester = ?`,[semester]);
             const total_result = await enrollment_function.select_courselist(result, semester, token.id);
             return res.status(200).send(total_result);
         }
@@ -161,7 +159,10 @@ router.post('/insert', async (req, res) =>{
             const [result] = await db.promise().query(`select remain_seat, credit, time from subject where sub_code = ? and semester = ?`, [sub_code, semester]);
             let[{remain_seat, credit, time}] = result;
             if(remain_seat > 0){
-                let [same_subject] = await db.promise().query(`select sub_code from enrollment where sub_code = ? and semester = ? and student_id = ?`, [sub_code, semester, token.id]);
+                const [sub_name] = await db.promise().query(`select name from subject where sub_code = ? and semester = ?`, [sub_code, semester]);
+                const [same_subject] = await db.promise().query(`select s.name from enrollment e join subject s on e.sub_code = s.sub_code and e.semester = s.semester
+                    where s.name = ? and e.student_id = ?`, [sub_name[0].name, token.id]
+                );
                 if(same_subject.length == 0){
                     let [total_credit] = await db.promise().query(`select sum(s.credit) total_credit
                         from subject s join enrollment e on s.sub_code = e.sub_code and s.semester = e.semester
@@ -176,30 +177,10 @@ router.post('/insert', async (req, res) =>{
                             where e.student_id = ? and s.semester = ?`, [token.id, semester]
                         );
                         times = times.map(item => item.time.split('/')).flat();
-                        const checkTimesArr = []
-
-                        for(const timeArr of times){
-                            const weekday = timeArr[0];;
-                            const hoursStr = timeArr.slice(1);
-                            const numbers = hoursStr.split(',');
-                            for (const number of numbers) {
-                                const hour = weekday + number;
-                                checkTimesArr.push(hour);
-                            }
-                        }
+                        const checkTimesArr = await enrollment_function.lecture_time(times);
 
                         time = time.split('/');
-                        const timesArr = []
-
-                        for(const timeArr of time){
-                            const weekday = timeArr[0];;
-                            const hoursStr = timeArr.slice(1);
-                            const numbers = hoursStr.split(',');
-                            for (const number of numbers) {
-                                const hour = weekday + number;
-                                timesArr.push(hour);
-                            }
-                        }
+                        const timesArr = await enrollment_function.lecture_time(time);
 
                         for(const value of checkTimesArr){
                             if(timesArr.includes(value)){

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const jwt = require('../modules/jwt');
+const syllabus_function = require('../modules/syllabus_function');
 
 /**
  * @openapi
@@ -413,18 +414,9 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
             db.promise().query(`insert into syllabus(sub_code, semester, assistant_name, course_sumary, course_performance, operation_type, evaluation_method_ratio)
                 values(?,?,?,?,?,?,?)`, [sub_code, semester, assistant_name, course_sumary, course_performance, operation_type, evaluation_method_ratio]
             );
-            const textbook_info = Object.values(textbook).map(text => [text.title, text.author, text.publisher, text.publish_year]);
-            db.promise().query(`insert ignore into textbook(title, author, publisher, publish_year) values ?`, [textbook_info]);
-            const [syllabus_id] = await db.promise().query(`select id from syllabus where sub_code = ? and semester = ?`, [sub_code, semester]);
-            const textbook_ids = [];
-            for(let i = 0; i < textbook_info.length; i++){
-                const [rows] = await db.promise().query(`select id from textbook where title =? and author =?`, [textbook_info[i][0], textbook_info[i][1]]);
-                textbook_ids.push(rows[0].id)
-            }
-            const syllabus_textbook_info = textbook_ids.map(text => [syllabus_id[0].id, text]);
-            db.promise().query(`insert into syllabus_textbook(syllabus_id, textbook_id) values ?`, [syllabus_textbook_info]);
-            const lecture_schedule_info = Object.values(lecture_schedule).map(lec => [syllabus_id[0].id, lec.week, lec.content]);
-            db.promise().query(`insert into lecture_schedule(syllabus_id, week, content) values ?`, [lecture_schedule_info]);
+            const textbook_ids = await syllabus_function.select_textbook_ids(textbook);
+            const syllabus_id = await syllabus_function.select_syllabus_id(sub_code, semester);
+            syllabus_function.insert_schedule_and_syllabus_textbook(lecture_schedule, textbook_ids, syllabus_id);
             return res.sendStatus(201);
         }
     }
@@ -534,20 +526,13 @@ router.post('/:subjectID/:semesterID/update', async(req, res) => {
             db.promise().query(`update syllabus set assistant_name=?, course_sumary=?, course_performance=?, operation_type=?, evaluation_method_ratio=?
                 where sub_code=? and semester=?`, [assistant_name, course_sumary, course_performance, operation_type, evaluation_method_ratio, sub_code, semester]
             );
-            const textbook_info = Object.values(textbook).map(text => [text.title, text.author, text.publisher, text.publish_year]);
-            db.promise().query(`insert ignore into textbook(title, author, publisher, publish_year) values ?`, [textbook_info]);
-            const [syllabus_id] = await db.promise().query(`select id from syllabus where sub_code = ? and semester = ?`, [sub_code, semester]);
-            const textbook_ids = [];
-            for(let i = 0; i < textbook_info.length; i++){
-                const [rows] = await db.promise().query(`select id from textbook where title =? and author =?`, [textbook_info[i][0], textbook_info[i][1]]);
-                textbook_ids.push(rows[0].id)
-            }
+            const textbook_ids = await syllabus_function.select_textbook_ids(textbook);
+            const syllabus_id = await syllabus_function.select_syllabus_id(sub_code, semester);
+            
             db.promise().query(`delete from syllabus_textbook where syllabus_id = ?`, [syllabus_id[0].id]);
             db.promise().query(`delete from lecture_schedule where syllabus_id = ?`, [syllabus_id[0].id]);
-            const syllabus_textbook_info = textbook_ids.map(text => [syllabus_id[0].id, text]);
-            db.promise().query(`insert into syllabus_textbook(syllabus_id, textbook_id) values ?`, [syllabus_textbook_info]);
-            const lecture_schedule_info = Object.values(lecture_schedule).map(lec => [syllabus_id[0].id, lec.week, lec.content]);
-            db.promise().query(`insert into lecture_schedule(syllabus_id, week, content) values ?`, [lecture_schedule_info]);
+
+            syllabus_function.insert_schedule_and_syllabus_textbook(lecture_schedule, textbook_ids, syllabus_id);
             return res.sendStatus(201);
         }
     }
@@ -622,11 +607,12 @@ router.post('/', async (req, res) =>{
     if (Number.isInteger(token)){
         return res.sendStatus(token);
     } else{
-        let enrollment = req.body.enrollment;
-        let professor_name = req.body.professor_name;
-        let semester = req.body.semester;
-        let sub_name = req.body.sub_name;
-        let major_area = req.body.major_area;
+        const enrollment = req.body.enrollment;
+        const professor_name = req.body.professor_name;
+        const semester = req.body.semester;
+        const sub_name = req.body.sub_name;
+        const major_area = req.body.major_area;
+        const userid = token.id;
         if(enrollment == '전체'){
             if(sub_name.length == 0){
                 if(major_area.length == 0){
@@ -681,7 +667,7 @@ router.post('/', async (req, res) =>{
                         const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
                             from professortable p join subject s on p.id = s.professor_id
                             join enrollment e on s.sub_code = e.sub_code
-                            where e.student_id = ? and s.semester = ?;`,[token.id, semester]
+                            where e.student_id = ? and s.semester = ?;`,[userid, semester]
                         );
                         return res.status(200).send(result);
                     } else{
@@ -689,7 +675,7 @@ router.post('/', async (req, res) =>{
                             from professortable p join subject s on p.id = s.professor_id
                             join enrollment e on s.sub_code = e.sub_code
                             where e.student_id = ? and s.semester = ? and s.major_area = ?;`,
-                            [token.id, semester, major_area]
+                            [userid, semester, major_area]
                         );
                         return res.status(200).send(result);
                     }
@@ -699,7 +685,7 @@ router.post('/', async (req, res) =>{
                             from professortable p join subject s on p.id = s.professor_id
                             join enrollment e on s.sub_code = e.sub_code
                             where e.student_id = ? and s.semester = ? and p.name = ?;`,
-                            [token.id, semester, professor_name]
+                            [userid, semester, professor_name]
                         );
                         return res.status(200).send(result);
                     } else{
@@ -707,7 +693,7 @@ router.post('/', async (req, res) =>{
                             from professortable p join subject s on p.id = s.professor_id
                             join enrollment e on s.sub_code = e.sub_code
                             where e.student_id = ? and s.semester = ? and s.major_area = ? and p.name = ?;`,
-                            [token.id, semester, major_area, professor_name]
+                            [userid, semester, major_area, professor_name]
                         );
                         return res.status(200).send(result);
                     }
@@ -719,7 +705,7 @@ router.post('/', async (req, res) =>{
                             from professortable p join subject s on p.id = s.professor_id
                             join enrollment e on s.sub_code = e.sub_code
                             where e.student_id = ? and s.semester = ? and s.name = ?;`,
-                            [token.id, semester, `%${sub_name}%`]
+                            [userid, semester, `%${sub_name}%`]
                         );
                         return res.status(200).send(result);
                     } else{
@@ -727,7 +713,7 @@ router.post('/', async (req, res) =>{
                             from professortable p join subject s on p.id = s.professor_id
                             join enrollment e on s.sub_code = e.sub_code
                             where e.student_id = ? and s.semester = ? and s.name = ? and s.major_area = ?;`,
-                            [token.id, semester, `%${sub_name}%`, major_area]
+                            [userid, semester, `%${sub_name}%`, major_area]
                         );
                         return res.status(200).send(result);
                     }
@@ -737,7 +723,7 @@ router.post('/', async (req, res) =>{
                             from professortable p join subject s on p.id = s.professor_id
                             join enrollment e on s.sub_code = e.sub_code
                             where e.student_id = ? and s.semester = ? and s.name = ? and p.name = ?;`,
-                            [token.id, semester, `%${sub_name}%`, professor_name]
+                            [userid, semester, `%${sub_name}%`, professor_name]
                         );
                         return res.status(200).send(result);
                     } else{
@@ -745,7 +731,7 @@ router.post('/', async (req, res) =>{
                             from professortable p join subject s on p.id = s.professor_id
                             join enrollment e on s.sub_code = e.sub_code
                             where e.student_id = ? and s.semester = ? and s.name = ? and s.major_area = ? and p.name = ?;`,
-                            [token.id, semester, `%${sub_name}%`, major_area, professor_name]
+                            [userid, semester, `%${sub_name}%`, major_area, professor_name]
                         );
                         return res.status(200).send(result);
                     }

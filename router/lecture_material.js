@@ -368,16 +368,17 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             let sub_code = req.params.subjectID;
             let semester = req.params.semesterID;
             if(token.author == 1){
-                const [result] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, n.created_time, n.view, n.semester
-                    from enrollment e join lecture_material n
-                    on e.sub_code = n.sub_code and e.semester = n.semester
-                    where e.student_id = ? and e.semester = ? and e.sub_code = ? order by n.id`,
+                const [result] = await db.promise().query(`select l.id, l.sub_code, l.professor_name, l.title, l.writer, lf.file_name, DATE_FORMAT(l.created_time, '%Y-%m-%d %H:%i:%s') l.created_time, l.view, l.semester
+                    from enrollment e join lecture_material l on e.sub_code = l.sub_code and e.semester = l.semester
+                    join lecture_material_file lf on l.id = lf.lecture_material_id
+                    where e.student_id = ? and e.semester = ? and e.sub_code = ? order by l.id`,
                     [token.id, semester,sub_code]
                 );
                 return res.status(200).send(result);
             } else{
-                const [result] = await db.promise().query(`select id, sub_code, professor_name, title, writer, created_time, view, semester
-                    from lecture_material where professor_name = ? and semester = ? and sub_code = ? order by id`,
+                const [result] = await db.promise().query(`select l.id, l.sub_code, l.professor_name, l.title, l.writer, lf.file_name, DATE_FORMAT(l.created_time, '%Y-%m-%d %H:%i:%s') l.created_time, l.view, l.semester
+                    from lecture_material l join lecuture_material_file lf on l.id = lf.lecture_material_id
+                    where l.professor_name = ? and l.semester = ? and l.sub_code = ? order by l.id`,
                     [token.name, semester,sub_code]
                 );
                 return res.status(201).send(result);
