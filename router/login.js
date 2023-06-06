@@ -237,7 +237,6 @@ router.post('/', async (req, res) =>{
                 httpOnly: true,
                 sameSite: 'none',
                 secure: true
-                
             });
             const {author, ...info} = result[0];
             return res.status(200).send(info);

@@ -24,11 +24,11 @@ module.exports = {
             throw err;
         }
     },
-    select_lecture_materialid: async (name, semester, sub_code, lecture_materialid) =>{
+    select_lecture_materialid: async (semester, sub_code, lecture_materialid) =>{
         try{
             const [result] = await db.promise().query(`select id
-                from lecture_material where professor_name = ? and semester = ? and sub_code = ? order by id limit ?,1`,
-                [name, semester,sub_code,lecture_materialid]
+                from lecture_material semester = ? and sub_code = ? order by id limit ?,1`,
+                [semester,sub_code,lecture_materialid]
             );
             const lecture_material_uniqueid = result[0].id;
             return lecture_material_uniqueid;
