@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const jwt = require('../modules/jwt');
+const fs = require('fs');
 const notice_function = require('../modules/notice_function');
 const multer = require('multer');
 const upload = multer();
 
-router.get('/:subjectID/:semesterID/:noticeID/download', async (req, res) => {
+router.get('/:subjectID/:semesterID/:noticeID/:fileID/download', async (req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
@@ -15,10 +16,22 @@ router.get('/:subjectID/:semesterID/:noticeID/download', async (req, res) => {
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             const noticeid = req.params.noticeID - 1;
-            
-            return res.sendStatus(201);
+            const file_name = req.params.fileID;
+
+            const notice_id = await notice_function.select_noticeid(semester, sub_code, noticeid);
+            const [file_data] = await db.promise().query(`select file_data from notice_file where notice_id = ? and file_name = ?`, [notice_id, file_name]);
+            if(file_data.length > 0){
+                const fileData = file_data[0].file_data;
+
+                res.setHeader('Content-Disposition', `attachment; filename="${file_name}"`);
+                res.setHeader('Content-Type', 'application/octet-stream');
+
+                return res.status(200).send(fileData);
+            } else{
+                return res.sendStatus(404);
+            }
         }
-}
+    }
     catch(err){
         throw err;
     }
