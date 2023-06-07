@@ -3,10 +3,10 @@ const db = require('../config/db');
 module.exports = {
     select_noticefile: async (notice_uniqueid) => {
         try{
-            const [result] = await db.promise().query(`select file_name
+            const [result] = await db.promise().query(`select JSON_ARRAYAGG(file_name) file_name
                 from notice_file where notice_id = ?`, [notice_uniqueid]
             );
-            return result;
+            return result[0];
         }
         catch(err){
             throw err;
@@ -14,9 +14,7 @@ module.exports = {
     },
     select_notice: async (notice_uniqueid) =>{
         try{
-            const [result] = await db.promise().query(`select sub_code,professor_name,title,content,writer,DATE_FORMAT(updated_time, '%Y-%m-%d %H:%i:%s') updated_time,view,semester
-                from notice where id = ?`, [notice_uniqueid]
-            );
+            const [result] = await db.promise().query(`select content from notice where id = ?`, [notice_uniqueid]);
             return result[0];
         }
         catch(err){
@@ -47,15 +45,15 @@ module.exports = {
     },
     notice_info: async (notice, file) => {
         try{
-            if(file.length > 0){
+            if(file){
                 const result = {
-                    '공지사항 정보': notice,
-                    '파일 정보': file
+                    'notice': notice,
+                    'file': file
                 };
                 return result;
             }else{
                 const result = {
-                    '공지사항 정보': notice,
+                    'notice': notice,
                 };
                 return result;
             }

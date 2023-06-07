@@ -96,55 +96,20 @@ router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res
  *            schema:
  *              type: object
  *              properties:
- *                강의자료실 정보:
+ *                lecture_material:
  *                  type: object
  *                  properties:
- *                    sub_code:
- *                      type: string
- *                      description: 과목코드
- *                    professor_name:
- *                      type: string
- *                      description: 교수이름
- *                    title:
- *                      type: string
- *                      description: 제목
  *                    content:
  *                      type: string
  *                      description: 본문
- *                    writer:
- *                      type: string
- *                      description: 작성자
- *                    updated_time:
- *                      type: string
- *                      format: date-time
- *                      description: 업데이트 날짜
- *                    view:
- *                      type: integer
- *                      description: 조회수
- *                    semester:
- *                      type: string
- *                      description: 년도-학기
- *                파일 정보:
- *                  type: array
- *                  description: 파일 정보
- *                  items:
- *                    type: object
- *                    properties:
- *                      file_name:
+ *                file:
+ *                  type: object
+ *                  properties:
+ *                    file_name:
+ *                      type: array
+ *                      items:
  *                        type: string
- *                        description: 파일이름
- *                      file_data:
- *                        type: object
- *                        properties:
- *                          type:
- *                            type: string
- *                            description: 파일 타입
- *                          data:
- *                            type: array
- *                            items:
- *                              type: integer
- *                              description: 파일 데이터 (10진수)
- *                            desciption: 파일 데이터
+ *                      description: 파일 이름
  *      '201':
  *        description: 교수일 때 해당 강의자료실 출력 성공
  *        content:
@@ -152,55 +117,20 @@ router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res
  *            schema:
  *              type: object
  *              properties:
- *                강의자료실 정보:
+ *                lecture_material:
  *                  type: object
  *                  properties:
- *                    sub_code:
- *                      type: string
- *                      description: 과목코드
- *                    professor_name:
- *                      type: string
- *                      description: 교수이름
- *                    title:
- *                      type: string
- *                      description: 제목
  *                    content:
  *                      type: string
  *                      description: 본문
- *                    writer:
- *                      type: string
- *                      description: 작성자
- *                    updated_time:
- *                      type: string
- *                      format: date-time
- *                      description: 업데이트 날짜
- *                    view:
- *                      type: integer
- *                      description: 조회수
- *                    semester:
- *                      type: string
- *                      description: 년도-학기
- *                파일 정보:
- *                  type: array
- *                  description: 파일 정보
- *                  items:
- *                    type: object
- *                    properties:
- *                      file_name:
+ *                file:
+ *                  type: object
+ *                  properties:
+ *                    file_name:
+ *                      type: array
+ *                      items:
  *                        type: string
- *                        description: 파일이름
- *                      file_data:
- *                        type: object
- *                        properties:
- *                          type:
- *                            type: string
- *                            description: 파일 타입
- *                          data:
- *                            type: array
- *                            items:
- *                              type: integer
- *                              description: 파일 데이터 (10진수)
- *                            desciption: 파일 데이터
+ *                      description: 파일 이름
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -281,18 +211,9 @@ router.get('/:subjectID/:semesterID/:lecture_materialID', async (req, res) => {
  *                      id:
  *                        type: integer
  *                        description: 강의자료실 번호
- *                      sub_code:
- *                        type: string
- *                        description: 과목코드
- *                      professor_name:
- *                        type: string
- *                        description: 교수이름
  *                      title:
  *                        type: string
  *                        description: 제목
- *                      content:
- *                        type: string
- *                        description: 본문
  *                      writer:
  *                        type: string
  *                        description: 작성자
@@ -303,9 +224,6 @@ router.get('/:subjectID/:semesterID/:lecture_materialID', async (req, res) => {
  *                      view:
  *                        type: integer
  *                        description: 조회수
- *                      semester:
- *                        type: string
- *                        description: 년도-학기
  *                      file_name:
  *                        type: array
  *                        items:
@@ -327,18 +245,9 @@ router.get('/:subjectID/:semesterID/:lecture_materialID', async (req, res) => {
  *                      id:
  *                        type: integer
  *                        description: 강의자료실 번호
- *                      sub_code:
- *                        type: string
- *                        description: 과목코드
- *                      professor_name:
- *                        type: string
- *                        description: 교수이름
  *                      title:
  *                        type: string
  *                        description: 제목
- *                      content:
- *                        type: string
- *                        description: 본문
  *                      writer:
  *                        type: string
  *                        description: 작성자
@@ -349,9 +258,6 @@ router.get('/:subjectID/:semesterID/:lecture_materialID', async (req, res) => {
  *                      view:
  *                        type: integer
  *                        description: 조회수
- *                      semester:
- *                        type: string
- *                        description: 년도-학기
  *                      file_name:
  *                        type: array
  *                        items:
@@ -372,7 +278,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             if(token.author == 1){
-                const [lecture_material] = await db.promise().query(`select l.id, l.sub_code, l.professor_name, l.title, l.writer, DATE_FORMAT(l.created_time, '%Y-%m-%d %H:%i:%s') created_time, l.view, l.semester, JSON_ARRAYAGG(lf.file_name) AS file_names
+                const [lecture_material] = await db.promise().query(`select l.id, l.title, l.writer, DATE_FORMAT(l.created_time, '%Y-%m-%d') created_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
                     from enrollment e join lecture_material l on e.sub_code = l.sub_code and e.semester = l.semester
                     join lecture_material_file lf on l.id = lf.lecture_mateiral_id where e.student_id = ? and e.semester = ? and e.sub_code = ?
                     group by n.id order by n.id`, [token.id, semester, sub_code]
@@ -383,7 +289,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
                 }
                 return res.status(200).send(result);
             } else{
-                const [lecture_material] = await db.promise().query(`select l.id, l.sub_code, l.professor_name, l.title, l.writer, DATE_FORMAT(l.created_time, '%Y-%m-%d %H:%i:%s') created_time, l.view, l.semester, JSON_ARRAYAGG(lf.file_name) AS file_names
+                const [lecture_material] = await db.promise().query(`select l.id, l.title, l.writer, DATE_FORMAT(l.created_time, '%Y-%m-%d') created_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
                     from lecture_material l join lecture_material_file lf on l.id = lf.lecture_mateiral_id where l.semester = ? and l.sub_code = ? and l.professor_name = ?
                     group by n.id order by n.id`, [semester, sub_code, token.name]
                 );

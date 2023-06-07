@@ -7,6 +7,55 @@ const notice_function = require('../modules/notice_function');
 const multer = require('multer');
 const upload = multer();
 
+/**
+ * @openapi 
+ * /notice/{subjectID}/{semesterID}/{noticeID}/{fileID}/download:
+ *  parameters:
+ *    - name: subjectID
+ *      in: path
+ *      required: true
+ *      description: 과목 코드
+ *      schema:
+ *        type: string
+ *    - name: semesterID
+ *      in: path
+ *      required: true
+ *      description: 년도-학기
+ *      schema:
+ *        type: string
+ *    - name: noticeID
+ *      in: path
+ *      required: true
+ *      description: 공지사항 번호
+ *      schema:
+ *        type: integer
+ *    - name: fileID
+ *      in: path
+ *      required: true
+ *      description: 파일명
+ *      schema:
+ *        type: string
+ *  get:
+ *    summary: 파일 다운로드
+ *    description: 해당 공지사항의 해당 파일 다운로드
+ *    security:
+ *      - CookieAuth: []
+ *    responses:
+ *      '200':
+ *        description: 파일 다운로드 성공
+ *        content:
+ *          application/octet-stream:
+ *            schema:
+ *              type: string
+ *              format: binary
+ *      '401':
+ *        description: 잘못된 access 토큰
+ *      '404':
+ *        description: 파일이 존재하지 않음
+ *      '419':
+ *        description: access 토큰 만료
+ */
+
 router.get('/:subjectID/:semesterID/:noticeID/:fileID/download', async (req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
@@ -127,55 +176,20 @@ router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
  *            schema:
  *              type: object
  *              properties:
- *                공지사항 정보:
+ *                notice:
  *                  type: object
  *                  properties:
- *                    sub_code:
- *                      type: string
- *                      description: 과목코드
- *                    professor_name:
- *                      type: string
- *                      description: 교수이름
- *                    title:
- *                      type: string
- *                      description: 제목
  *                    content:
  *                      type: string
  *                      description: 본문
- *                    writer:
- *                      type: string
- *                      description: 작성자
- *                    updated_time:
- *                      type: string
- *                      format: date-time
- *                      description: 업데이트 날짜
- *                    view:
- *                      type: integer
- *                      description: 조회수
- *                    semester:
- *                      type: string
- *                      description: 년도-학기
- *                파일 정보:
- *                  type: array
- *                  description: 파일 정보
- *                  items:
- *                    type: object
- *                    properties:
- *                      file_name:
+ *                file:
+ *                  type: object
+ *                  properties:
+ *                    file_name:
+ *                      type: array
+ *                      items:
  *                        type: string
- *                        description: 파일이름
- *                      file_data:
- *                        type: object
- *                        properties:
- *                          type:
- *                            type: string
- *                            description: 파일 타입
- *                          data:
- *                            type: array
- *                            items:
- *                              type: integer
- *                              description: 파일 데이터 (10진수)
- *                            desciption: 파일 데이터
+ *                      description: 파일 이름
  *      '201':
  *        description: 교수일 때 해당 공지사항 출력 성공
  *        content:
@@ -183,55 +197,20 @@ router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
  *            schema:
  *              type: object
  *              properties:
- *                공지사항 정보:
+ *                notice:
  *                  type: object
  *                  properties:
- *                    sub_code:
- *                      type: string
- *                      description: 과목코드
- *                    professor_name:
- *                      type: string
- *                      description: 교수이름
- *                    title:
- *                      type: string
- *                      description: 제목
  *                    content:
  *                      type: string
  *                      description: 본문
- *                    writer:
- *                      type: string
- *                      description: 작성자
- *                    updated_time:
- *                      type: string
- *                      format: date-time
- *                      description: 업데이트 날짜
- *                    view:
- *                      type: integer
- *                      description: 조회수
- *                    semester:
- *                      type: string
- *                      description: 년도-학기
- *                파일 정보:
- *                  type: array
- *                  description: 파일 정보
- *                  items:
- *                    type: object
- *                    properties:
- *                      file_name:
+ *                file:
+ *                  type: object
+ *                  properties:
+ *                    file_name:
+ *                      type: array
+ *                      items:
  *                        type: string
- *                        description: 파일이름
- *                      file_data:
- *                        type: object
- *                        properties:
- *                          type:
- *                            type: string
- *                            description: 파일 타입
- *                          data:
- *                            type: array
- *                            items:
- *                              type: integer
- *                              description: 파일 데이터 (10진수)
- *                            desciption: 파일 데이터
+ *                      description: 파일 이름
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -312,18 +291,9 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
  *                      id:
  *                        type: integer
  *                        description: 공지사항 번호
- *                      sub_code:
- *                        type: string
- *                        description: 과목코드
- *                      professor_name:
- *                        type: string
- *                        description: 교수이름
  *                      title:
  *                        type: string
  *                        description: 제목
- *                      content:
- *                        type: string
- *                        description: 본문
  *                      writer:
  *                        type: string
  *                        description: 작성자
@@ -334,9 +304,6 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
  *                      view:
  *                        type: integer
  *                        description: 조회수
- *                      semester:
- *                        type: string
- *                        description: 년도-학기
  *                      file_name:
  *                        type: array
  *                        items:
@@ -360,18 +327,9 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
  *                      id:
  *                        type: integer
  *                        description: 공지사항 번호
- *                      sub_code:
- *                        type: string
- *                        description: 과목코드
- *                      professor_name:
- *                        type: string
- *                        description: 교수이름
  *                      title:
  *                        type: string
  *                        description: 제목
- *                      content:
- *                        type: string
- *                        description: 본문
  *                      writer:
  *                        type: string
  *                        description: 작성자
@@ -382,9 +340,6 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
  *                      view:
  *                        type: integer
  *                        description: 조회수
- *                      semester:
- *                        type: string
- *                        description: 년도-학기
  *                      file_name:
  *                        type: array
  *                        items:
@@ -405,7 +360,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             if(token.author == 1){
-                const [notice] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, DATE_FORMAT(n.created_time, '%Y-%m-%d %H:%i:%s') created_time, n.view, n.semester, JSON_ARRAYAGG(nf.file_name) AS file_names
+                const [notice] = await db.promise().query(`select n.id, n.title, n.writer, DATE_FORMAT(n.created_time, '%Y-%m-%d') created_time, n.view, JSON_ARRAYAGG(nf.file_name) AS file_names
                     from enrollment e join notice n on e.sub_code = n.sub_code and e.semester = n.semester
                     join notice_file nf on n.id = nf.notice_id where e.student_id = ? and e.semester = ? and e.sub_code = ?
                     group by n.id order by n.id`, [token.id, semester, sub_code]
@@ -416,7 +371,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
                 }
                 return res.status(200).send(result);
             } else{
-                const [notice] = await db.promise().query(`select n.id, n.sub_code, n.professor_name, n.title, n.writer, DATE_FORMAT(n.created_time, '%Y-%m-%d %H:%i:%s') created_time, n.view, n.semester, JSON_ARRAYAGG(nf.file_name) AS file_names
+                const [notice] = await db.promise().query(`select n.id, n.title, n.writer, DATE_FORMAT(n.created_time, '%Y-%m-%d') created_time, n.view, JSON_ARRAYAGG(nf.file_name) AS file_names
                     from notice n join notice_file nf on n.id = nf.notice_id where n.semester = ? and n.sub_code = ? and n.professor_name = ?
                     group by n.id order by n.id`, [semester, sub_code, token.name]
                 );

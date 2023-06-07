@@ -116,7 +116,7 @@ const main_function = require('../modules/main_function');
 
 router.get('/', async (req, res) =>{
     try{
-        const token = jwt.verify(req.cookies['accesstoken']);   
+        const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
             return res.sendStatus(token);
         } else{
