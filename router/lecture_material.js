@@ -279,9 +279,10 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             const semester = req.params.semesterID;
             if(token.author == 1){
                 const [lecture_material] = await db.promise().query(`select l.id, l.title, l.writer, DATE_FORMAT(l.created_time, '%Y-%m-%d') created_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
-                    from enrollment e join lecture_material l on e.sub_code = l.sub_code and e.semester = l.semester
-                    join lecture_material_file lf on l.id = lf.lecture_mateiral_id where e.student_id = ? and e.semester = ? and e.sub_code = ?
-                    group by n.id order by n.id`, [token.id, semester, sub_code]
+                    from lecture_material l left join lecture_material_file lf on l.id = lf.lecture_mateiral_id
+                    join enrollment e on e.sub_code = l.sub_code and e.semester = l.semester
+                    where e.student_id = ? and e.semester = ? and e.sub_code = ?
+                    group by l.id order by l.id`, [token.id, semester, sub_code]
                 );
 
                 const result = {
@@ -290,8 +291,8 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
                 return res.status(200).send(result);
             } else{
                 const [lecture_material] = await db.promise().query(`select l.id, l.title, l.writer, DATE_FORMAT(l.created_time, '%Y-%m-%d') created_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
-                    from lecture_material l join lecture_material_file lf on l.id = lf.lecture_mateiral_id where l.semester = ? and l.sub_code = ? and l.professor_name = ?
-                    group by n.id order by n.id`, [semester, sub_code, token.name]
+                    from lecture_material l left join lecture_material_file lf on l.id = lf.lecture_mateiral_id where l.semester = ? and l.sub_code = ? and l.professor_name = ?
+                    group by l.id order by l.id`, [semester, sub_code, token.name]
                 );
 
                 const result = {

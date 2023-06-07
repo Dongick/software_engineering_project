@@ -361,8 +361,9 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             const semester = req.params.semesterID;
             if(token.author == 1){
                 const [notice] = await db.promise().query(`select n.id, n.title, n.writer, DATE_FORMAT(n.created_time, '%Y-%m-%d') created_time, n.view, JSON_ARRAYAGG(nf.file_name) AS file_names
-                    from enrollment e join notice n on e.sub_code = n.sub_code and e.semester = n.semester
-                    join notice_file nf on n.id = nf.notice_id where e.student_id = ? and e.semester = ? and e.sub_code = ?
+                    from notice n left join notice_file nf on n.id = nf.notice_id
+                    join enrollment e on e.sub_code = n.sub_code and e.semester = n.semester
+                    where e.student_id = ? and e.semester = ? and e.sub_code = ?
                     group by n.id order by n.id`, [token.id, semester, sub_code]
                 );
 
@@ -372,7 +373,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
                 return res.status(200).send(result);
             } else{
                 const [notice] = await db.promise().query(`select n.id, n.title, n.writer, DATE_FORMAT(n.created_time, '%Y-%m-%d') created_time, n.view, JSON_ARRAYAGG(nf.file_name) AS file_names
-                    from notice n join notice_file nf on n.id = nf.notice_id where n.semester = ? and n.sub_code = ? and n.professor_name = ?
+                    from notice n left join notice_file nf on n.id = nf.notice_id where n.semester = ? and n.sub_code = ? and n.professor_name = ?
                     group by n.id order by n.id`, [semester, sub_code, token.name]
                 );
                 const result = {
@@ -528,11 +529,13 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
         if (Number.isInteger(token)){
             res.sendStatus(token);
         } else{
+            console.log(req.body);
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             const title = req.body.title;
             const content = req.body.content;
             const files = req.files;
+            console.log(req.files);
             await db.promise().query(`insert into 
                 notice(sub_code,professor_name,title,content,writer,semester)
                 values (?,?,?,?,?,?);`,
