@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const jwt = require('../modules/jwt');
-const fs = require('fs');
 const notice_function = require('../modules/notice_function');
 const multer = require('multer');
 const upload = multer();
@@ -66,12 +65,10 @@ router.get('/:subjectID/:semesterID/:noticeID/:fileID/download', async (req, res
             const semester = req.params.semesterID;
             const noticeid = req.params.noticeID - 1;
             const file_name = req.params.fileID;
-
             const notice_id = await notice_function.select_noticeid(semester, sub_code, noticeid);
             const [file_data] = await db.promise().query(`select file_data from notice_file where notice_id = ? and file_name = ?`, [notice_id, file_name]);
             if(file_data.length > 0){
                 const fileData = file_data[0].file_data;
-
                 res.setHeader('Content-Disposition', `attachment; filename="${file_name}"`);
                 res.setHeader('Content-Type', 'application/octet-stream');
 
@@ -122,7 +119,7 @@ router.get('/:subjectID/:semesterID/:noticeID/:fileID/download', async (req, res
  *        description: access 토큰 만료
  */
 
-router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
+router.delete('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
@@ -131,6 +128,7 @@ router.get('/:subjectID/:semesterID/:noticeID/delete', async (req, res) =>{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             const noticeid = req.params.noticeID - 1;
+            console.log(sub_code, semester, noticeid);
             const notice_id = await notice_function.select_noticeid(semester, sub_code, noticeid);
             db.promise().query(`delete from notice where id = ?`, [notice_id]);
             return res.sendStatus(201);
@@ -230,8 +228,8 @@ router.get('/:subjectID/:semesterID/:noticeID', async (req, res) => {
             const notice_id = await notice_function.select_noticeid(semester, sub_code, noticeid);
             const file = await notice_function.select_noticefile(notice_id);
             if(token.author == 1){
-                const view_check = await db.promise().query(`select * from notice_view where notice_id = ? and student_id = ?`, [notice_id, userid]);
-                if(view_check[0].length > 0){
+                const [view_check] = await db.promise().query(`select id from notice_view where notice_id = ? and student_id = ?`, [notice_id, userid]);
+                if(view_check.length > 0){
                     const notice = await notice_function.select_notice(notice_id);
                     const result = await notice_function.notice_info(notice, file);
                     return res.status(200).send(result);
@@ -360,25 +358,24 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             if(token.author == 1){
-                const [notice] = await db.promise().query(`select n.id, n.title, n.writer, DATE_FORMAT(n.created_time, '%Y-%m-%d') created_time, n.view, JSON_ARRAYAGG(nf.file_name) AS file_names
+                const [notice] = await db.promise().query(`select row_number() over (order by n.updated_time) as id, n.title, n.writer, DATE_FORMAT(n.updated_time, '%Y-%m-%d') updated_time, n.view, JSON_ARRAYAGG(nf.file_name) AS file_names
                     from notice n left join notice_file nf on n.id = nf.notice_id
                     join enrollment e on e.sub_code = n.sub_code and e.semester = n.semester
                     where e.student_id = ? and e.semester = ? and e.sub_code = ?
-                    group by n.id order by n.id`, [token.id, semester, sub_code]
+                    group by n.id order by n.updated_time desc`, [token.id, semester, sub_code]
                 );
-
                 const result = {
                     "notice": notice
-                }
+                };
                 return res.status(200).send(result);
             } else{
-                const [notice] = await db.promise().query(`select n.id, n.title, n.writer, DATE_FORMAT(n.created_time, '%Y-%m-%d') created_time, n.view, JSON_ARRAYAGG(nf.file_name) AS file_names
+                const [notice] = await db.promise().query(`select row_number() over (order by n.updated_time) as id, n.title, n.writer, DATE_FORMAT(n.updated_time, '%Y-%m-%d') updated_time, n.view, JSON_ARRAYAGG(nf.file_name) AS file_names
                     from notice n left join notice_file nf on n.id = nf.notice_id where n.semester = ? and n.sub_code = ? and n.professor_name = ?
-                    group by n.id order by n.id`, [semester, sub_code, token.name]
+                    group by n.id order by n.updated_time desc`, [semester, sub_code, token.name]
                 );
                 const result = {
                     "notice": notice
-                }
+                };
                 return res.status(201).send(result);
             }
         }
@@ -441,7 +438,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *        description: access 토큰 만료
  */
 
-router.post('/:subjectID/:semesterID/:noticeID/update', upload.array('files'), async (req, res) =>{
+router.put('/:subjectID/:semesterID/:noticeID/update', upload.array('files'), async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
@@ -455,11 +452,11 @@ router.post('/:subjectID/:semesterID/:noticeID/update', upload.array('files'), a
             const files = req.files;
             const notice_id = await notice_function.select_noticeid(semester,sub_code,noticeid);
             db.promise().query(`update notice set title=?, content=? where id=?`, [title, content, notice_id]);
-            const [file_check] = await notice_function.select_noticefile(notice_id);
-            if(file_check.length > 0){
+            const file_check = await notice_function.select_noticefile(notice_id);
+            if(file_check){
                 await db.promise().query(`delete from notice_file where notice_id=?`, [notice_id]);
             }
-            if(files){
+            if(files.length > 0){
                 const file_info = files.map(file => [file.originalname, file.buffer]);
                 notice_function.insert_noticefile(notice_id, file_info);
             }
@@ -529,19 +526,18 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
         if (Number.isInteger(token)){
             res.sendStatus(token);
         } else{
-            console.log(req.body);
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             const title = req.body.title;
             const content = req.body.content;
             const files = req.files;
-            console.log(req.files);
+
             await db.promise().query(`insert into 
                 notice(sub_code,professor_name,title,content,writer,semester)
                 values (?,?,?,?,?,?);`,
                 [sub_code,token.name,title,content,token.name,semester]
             );
-            if(files){
+            if(files.length > 0){
                 const file_info = files.map(file => [file.originalname, file.buffer]);
                 const [noticeid] = await db.promise().query(`select id from notice order by id desc limit 1`);
                 const notice_id = noticeid[0].id

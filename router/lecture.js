@@ -77,6 +77,18 @@ const jwt = require('../modules/jwt');
  *                      title:
  *                        type: string
  *                        description: 강의자료 제목
+ *                assignment:
+ *                  type: array
+ *                  description: 해당 과목의 최근 과제
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      date:
+ *                        type: string
+ *                        description: 과제 최종 수정 날짜
+ *                      title:
+ *                        type: string
+ *                        description: 과제 제목
  *      '201':
  *        description: 교수 강의 세부정보
  *        content:
@@ -126,6 +138,18 @@ const jwt = require('../modules/jwt');
  *                      title:
  *                        type: string
  *                        description: 강의자료 제목
+ *                assignment:
+ *                  type: array
+ *                  description: 해당 과목의 최근 과제
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      date:
+ *                        type: string
+ *                        description: 과제 최종 수정 날짜
+ *                      title:
+ *                        type: string
+ *                        description: 과제 제목
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -142,17 +166,22 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             let semester = req.params.semesterID;
 
             const [notice] = await db.promise().query(`select date_format(updated_time, '%Y-%m-%d') date, title
-                    from notice  where semester = ? and sub_code = ?
+                    from notice where semester = ? and sub_code = ?
                     order by updated_time desc limit 5`, [semester, sub_code]
-                );
+            );
             const [lecture_material] = await db.promise().query(`select date_format(updated_time, '%Y-%m-%d') date, title
                 from lecture_material  where semester = ? and sub_code = ?
                 order by updated_time desc limit 5`, [semester, sub_code]
             );
+            const [assignment] = await db.promise().query(`select date_format(updated_at, '%Y-%m-%d') date, title
+                from assignment where semester = ? and sub_code = ?
+                order by updated_at desc limit 5`, [semester, sub_code]
+            );
             const result = {
                 all_semester: [],
                 "notice": notice,
-                "lecture_material": lecture_material
+                "lecture_material": lecture_material,
+                "assignment": assignment
             };
             if(token.author == 1){
                 const [semesters] = await db.promise().query(`select semester from enrollment where student_id = ? group by semester order by semester desc`, [token.id]);

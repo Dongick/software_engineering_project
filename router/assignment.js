@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/db');
 const jwt = require('../modules/jwt');
 const multer = require('multer');
+const assignment_function = require('../modules/assignment_function');
 const upload = multer();
 
 /**
@@ -49,15 +50,11 @@ router.get('/:subjectID/:semesterID/:assignmentID/delete', async (req, res) =>{
         if (Number.isInteger(token)){
             return res.sendStatus(token);
         } else{
-            let sub_code = req.params.subjectID;
-            let semester = req.params.semesterID;
-            let assignmentid = req.params.assignmentID - 1;
+            const sub_code = req.params.subjectID;
+            const semester = req.params.semesterID;
+            const assignmentid = req.params.assignmentID - 1;
 
-            const [id] = await db.promise().query(`select id from assignment where sub_code = ? and semester = ? order by id limit ?,1`,
-                [sub_code, semester, assignmentid]
-            );
-            const assignment_id = id[0].id;
-
+            const assignment_id = await assignment_function.select_assignmentid(semester, sub_code, assignmentid);
             if(token.author == 1){
                 const [submit_id] = await db.promise().query(`select id from assignment_submit where assignment_id = ? and student_id = ?`, [assignment_id, token.id]);
                 const assignment_submit_id = submit_id[0].id;
@@ -240,24 +237,18 @@ router.get('/:subjectID/:semesterID/:assignmentID', async (req, res) => {
             const assignmentid = req.params.assignmentID - 1;
             const userid = token.id;
 
-            const [id] = await db.promise().query(`select id from assignment where sub_code = ? and semester = ? order by id limit ?,1`,
-                [sub_code, semester, assignmentid]
-            );
-            const assignment_id = id[0].id;
-            const [assignment_file] = await db.promise().query(`select file_name, file_data from assignment_file where assignment_id = ?`, [assignment_id]);
-            const [assignment] = await db.promise().query(`select title, content, DATE_FORMAT(start_date, '%Y-%m-%d %H:%i:%s') start_date, DATE_FORMAT(due_date, '%Y-%m-%d %H:%i:%s') due_date
-                from assignment where id = ?`, [assignment_id]
-            );
+            const assignment_id = await assignment_function.select_assignmentid(semester, sub_code, assignmentid);
+            const assignment_file = await assignment_function.select_assignmentfile(assignment_id);   
+            const assignment = await assignment_function.select_assignment(assignment_id);
+
             result = {
-                "assignment": assignment[0],
+                "assignment": assignment,
                 "assignment_file": assignment_file
             };
 
             if(token.author == 1){
-                const [submit_id] = await db.promise().query(`select id from assignment_submit where assignment_id = ? and student_id = ?`, [assignment_id, userid]);
-                if(submit_id.length > 0){
-                    const assignment_submit_id = submit_id[0].id;
-                    
+                const assignment_submit_id = await assignment_function.select_assignment_submitid(assignment_id, userid);
+                if(assignment_submit_id.length > 0){
                     const [assignment_submit_file] = await db.promise().query(`select file_name, file_data from assignment_submit_file where assignment_submit_id = ?`, [assignment_submit_id]);
                     const [assignment_submit] = await db.promise().query(`select title, content from assignment_submit where id = ?`, [assignment_submit_id]);
                     result.assignment_submit = assignment_submit[0];
@@ -350,20 +341,27 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
         if (Number.isInteger(token)){
             res.sendStatus(token);
         } else{
-            let sub_code = req.params.subjectID;
-            let semester = req.params.semesterID;
+            const sub_code = req.params.subjectID;
+            const semester = req.params.semesterID;
             if(token.author == 1){
-                const [result] = await db.promise().query(`select a.title, DATE_FORMAT(a.start_date, '%Y-%m-%d %H:%i:%s') start_date, DATE_FORMAT(a.due_date, '%Y-%m-%d %H:%i:%s') due_date, s.submit_check
-                    from assignment a join assignment_submit s on a.id = s.assignment_id
-                    where s.student_id = ? and a.semester = ? and a.sub_code = ? order by a.id desc`,
-                    [token.id, semester, sub_code]
+                const [assignment] = await db.promise().query(`select row_number() over (order by a.id) as id, a.title, DATE_FORMAT(a.start_date, '%Y-%m-%d %H:%i:%s') start_date, DATE_FORMAT(a.due_date, '%Y-%m-%d %H:%i:%s') due_date, 
+                    case when s.id is null then 'Not Submitted' else 'Submitted' end as submission_status
+                    from assignment a left join assignment_submit s on a.id = s.assignment_id and s.student_id = ?
+                    where a.sub_code = ? and a.semester = ? order by a.id desc`,
+                    [token.id, sub_code, semester]
                 );
+                const result = {
+                    "assignment": assignment
+                };
                 return res.status(200).send(result);
             } else{
-                const [result] = await db.promise().query(`select title, DATE_FORMAT(start_date, '%Y-%m-%d %H:%i:%s') start_date, DATE_FORMAT(due_date, '%Y-%m-%d %H:%i:%s') due_date
-                    from assignment semester = ? and sub_code = ? order by id desc`,
-                    [semester, sub_code]
+                const [assignment] = await db.promise().query(`select row_number() over (order by id) as id, title, DATE_FORMAT(start_date, '%Y-%m-%d %H:%i:%s') start_date, DATE_FORMAT(due_date, '%Y-%m-%d %H:%i:%s') due_date
+                    from assignment where sub_code = ? and semester = ? order by id desc`,
+                    [sub_code, semester]
                 );
+                const result = {
+                    "assignment": assignment
+                };
                 return res.status(201).send(result);
             }
         }
@@ -441,23 +439,15 @@ router.post('/:subjectID/:semesterID/:assignmentID/update', upload.array('files'
             const content = req.body.content;
             const files = req.files;
             const userid = token.id;
-
-            const [id] = await db.promise().query(`select id from assignment where sub_code = ? and semester = ? order by id limit ?,1`,
-                [sub_code, semester, assignmentid]
-            );
-            const assignment_id = id[0].id;
+            const assignment_id = await assignment_function.select_assignmentid(semester, sub_code, assignmentid);
 
             if(token.author == 1){
-                const [submit_id] = await db.promise().query(`select id from assignment_submit where assignment_id = ? and student_id = ?`, [assignment_id, userid]);
-                const assignment_submit_id = submit_id[0].id;
-
-                db.promise().query(`update assignment_submit set title=?, content=? where id=?`, [title, content, assignment_submit_id]);
-                
+                const assignment_submit_id = await assignment_function.select_assignment_submitid(assignment_id, userid);
+                db.promise().query(`update assignment_submit set title=?, content=?, start_date = ?, due_date = ? where id=?`, [title, content, assignment_submit_id]);
                 const [beforeFile] = await db.promise().query(`select file_name from assignment_submit_file where assignment_submit_id = ?`, [assignment_submit_id]);
                 if(beforeFile.length > 0){
                     await db.promise().query(`delete from assignment_submit_file where assignment_submit_id=?;`, [assignment_submit_id]);
                 }
-
                 if(files){
                     const file_info = files.map(file => [file.originalname, file.buffer]);
                     const values = file_info.map(([name, data]) => [assignment_submit_id, name, data]);
@@ -465,16 +455,16 @@ router.post('/:subjectID/:semesterID/:assignmentID/update', upload.array('files'
                 }
                 return res.sendStatus(200);
             } else{
-                db.promise().query(`update assignment set title=?, content=? where id=?`, [title, content, assignment_id]);
-                const [beforeFile] = await db.promise().query(`select file_name from assignment_file where assignment_id = ?`, [assignment_id]);
-                if(beforeFile.length > 0){
+                const start_date = req.body.start_date;
+                const due_date = req.body.due_date;
+                db.promise().query(`update assignment set title=?, content=?, start_date = ?, due_date = ? where id=?`, [title, content, start_date, due_date, assignment_id]);
+                const file_check = await assignment_function.select_assignmentfile(assignment_id);
+                if(file_check){
                     await db.promise().query(`delete from assignment_file where assignment_id=?;`, [assignment_id]);
                 }
-
-                if(files){
+                if(files.length > 0){
                     const file_info = files.map(file => [file.originalname, file.buffer]);
-                    const values = file_info.map(([name, data]) => [assignment_id, name, data]);
-                    db.promise().query(`insert into assignment_file(assignment_id, file_name, file_data) values ?;`,[values]);
+                    assignment_function.insert_assignmentfile(assignment_id, file_info);
                 }
                 return res.sendStatus(201);
             }
@@ -556,15 +546,12 @@ router.post('/:subjectID/:semesterID/:assignmentID/submit', upload.array('files'
             const content = req.body.content;
             const files = req.files;
 
-            const [id] = await db.promise().query(`select id from assignment where sub_code = ? and semester = ? order by id limit ?,1`,
-                [sub_code, semester, assignmentid]
-            );
-            const assignment_id = id[0].id;
+            const assignment_id = await assignment_function.select_assignmentid(semester, sub_code, assignmentid);
 
             await db.promise().query(`insert into assignment_submit(assignment_id,student_id,title,content)
                 values (?,?,?,?);`, [assignment_id,token.id,title,content]
             );
-            if(files){
+            if(files.length > 0){
                 const file_info = files.map(file => [file.originalname, file.buffer]);
                 const [submit_id] = await db.promise().query(`select id from assignment_submit order by id desc limit 1;`,);
                 const assignment_submit_id = submit_id[0].id;
@@ -572,6 +559,38 @@ router.post('/:subjectID/:semesterID/:assignmentID/submit', upload.array('files'
                 db.promise().query(`insert into assignment_submit_file(assignment_submit_id, file_name, file_data) values ?;`,[values]);
             }
             return res.sendStatus(200);
+        }
+    }
+    catch(err){
+        throw err;
+    }
+})
+
+router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req, res) =>{
+    try{
+        const token = jwt.verify(req.cookies['accesstoken']);
+        if (Number.isInteger(token)){
+            res.sendStatus(token);
+        } else{
+            const sub_code = req.params.subjectID;
+            const semester = req.params.semesterID;
+            const title = req.body.title;
+            const content = req.body.content;
+            const start_date = req.body.start_date;
+            const due_date = req.body.due_date;
+            const files = req.files;
+            await db.promise().query(`insert into 
+                assignment(sub_code,semester,title,content,start_date,due_date)
+                values (?,?,?,?,?,?);`,
+                [sub_code,semester,title,content,start_date,due_date]
+            );
+            if(files.length > 0){
+                const file_info = files.map(file => [file.originalname, file.buffer]);
+                const [assignmentid] = await db.promise().query(`select id from assignment order by id desc limit 1`);
+                const assignment_id = assignmentid[0].id
+                assignment_function.insert_assignmentfile(assignment_id, file_info);
+            }
+            return res.sendStatus(201);
         }
     }
     catch(err){

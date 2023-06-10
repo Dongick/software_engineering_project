@@ -278,11 +278,11 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             if(token.author == 1){
-                const [lecture_material] = await db.promise().query(`select l.id, l.title, l.writer, DATE_FORMAT(l.created_time, '%Y-%m-%d') created_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
+                const [lecture_material] = await db.promise().query(`select row_number() over (order by l.updated_time) as id, l.title, l.writer, DATE_FORMAT(l.updated_time, '%Y-%m-%d') updated_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
                     from lecture_material l left join lecture_material_file lf on l.id = lf.lecture_mateiral_id
                     join enrollment e on e.sub_code = l.sub_code and e.semester = l.semester
                     where e.student_id = ? and e.semester = ? and e.sub_code = ?
-                    group by l.id order by l.id`, [token.id, semester, sub_code]
+                    group by l.id order by l.updated_time desc`, [token.id, semester, sub_code]
                 );
 
                 const result = {
@@ -290,9 +290,9 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
                 }
                 return res.status(200).send(result);
             } else{
-                const [lecture_material] = await db.promise().query(`select l.id, l.title, l.writer, DATE_FORMAT(l.created_time, '%Y-%m-%d') created_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
+                const [lecture_material] = await db.promise().query(`select row_number() over (order by l.updated_time) as id, l.title, l.writer, DATE_FORMAT(l.updated_time, '%Y-%m-%d') updated_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
                     from lecture_material l left join lecture_material_file lf on l.id = lf.lecture_mateiral_id where l.semester = ? and l.sub_code = ? and l.professor_name = ?
-                    group by l.id order by l.id`, [semester, sub_code, token.name]
+                    group by l.id order by l.updated_time desc`, [semester, sub_code, token.name]
                 );
 
                 const result = {
@@ -374,7 +374,7 @@ router.post('/:subjectID/:semesterID/:lecture_materialID/update', async (req, re
             const files = req.files;
             const lecture_material_id = await lecture_material_function.select_lecture_materialid(semester,sub_code,lecture_materialid)
             db.promise().query(`update lecture_material set title=?, content=? where id=?`, [title, content, lecture_material_id]);
-            const [file_check] = await lecture_material_function.select_lecture_materialfile(lecture_material_id);
+            const file_check = await lecture_material_function.select_lecture_materialfile(lecture_material_id);
             if(file_check.length > 0){
                 await db.promise().query(`delete from lecture_material_file where lecture_material_id=?;`, [lecture_material_id]);
             }

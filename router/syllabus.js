@@ -87,6 +87,28 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
     }
 })
 
+router.get('/:subjectID/:semesterID/list', async (req, res) => {
+    try{
+        const token = jwt.verify(req.cookies['accesstoken']);
+        if (Number.isInteger(token)){
+            return res.sendStatus(token);
+        } else{
+            const sub_code = req.params.subjectID;
+            const semester = req.params.semesterID;
+            const [syllabusList] = await db.promise().query(`select sub_code, name sub_name, time, class from subject
+                where sub_code = ? and semester = ?`, [sub_code, semester]
+            );
+            const result = {
+                "syllabusList":syllabusList[0]
+            }
+            return res.status(201).send(result);
+        }
+    } catch(err){
+        throw err;
+    }
+})
+
+
 /**
  * @openapi
  * /syllabus/{subjectID}/{semesterID}:
