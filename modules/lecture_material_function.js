@@ -1,10 +1,10 @@
 const db = require('../config/db');
 
 module.exports = {
-    select_lecture_materialfile: async (lecture_material_uniqueid) => {
+    select_lecture_materialfile: async (lecture_material_id) => {
         try{
             const [result] = await db.promise().query(`select JSON_ARRAYAGG(file_name) file_name
-                from lecture_material_file where lecture_material_id = ?`, [lecture_material_uniqueid]
+                from lecture_material_file where lecture_material_id = ?`, [lecture_material_id]
             );
             return result[0];
         }
@@ -23,12 +23,12 @@ module.exports = {
     },
     select_lecture_materialid: async (semester, sub_code, lecture_materialid) =>{
         try{
-            const [result] = await db.promise().query(`select id
-                from lecture_material semester = ? and sub_code = ? order by updated_time limit ?,1`,
+            const [lecture_material_id] = await db.promise().query(`select id
+                from lecture_material where semester = ? and sub_code = ? order by updated_time limit ?,1`,
                 [semester,sub_code,lecture_materialid]
             );
-            const lecture_material_uniqueid = result[0].id;
-            return lecture_material_uniqueid;
+            const result = lecture_material_id[0].id;
+            return result;
         }
         catch(err){
             throw err;
@@ -45,7 +45,7 @@ module.exports = {
     },
     lecture_material_info: async (lecture_material, file) => {
         try{
-            if(file.length > 0){
+            if(file){
                 const result = {
                     'lecture_material': lecture_material,
                     'file': file

@@ -43,7 +43,7 @@ const jwt = require('../modules/jwt');
  *        description: access 토큰 만료
  */
 
-router.get('/', async (req, res) => {
+/* router.get('/', async (req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
@@ -58,7 +58,7 @@ router.get('/', async (req, res) => {
     } catch (err) {
         throw err;
     }
-})
+}) */
 
 /**
  * @openapi

@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const jwt = require('../modules/jwt');
-const syllabus_function = require('../modules/syllabus_function');
 
 /**
  * @openapi
@@ -33,24 +32,12 @@ const syllabus_function = require('../modules/syllabus_function');
  *            schema:
  *              type: object
  *              properties:
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                semester:
- *                  type: string
- *                  description: 학기
- *                subject_name:
- *                  type: string
- *                  description: 과목명
  *                credit:
  *                  type: integer
  *                  description: 학점
- *                time:
- *                  type: string
- *                  description: 강의시간
- *                class:
- *                  type: string
- *                  description: 강의실
+ *                classification:
+ *                  type: integer
+ *                  description: 이수구분
  *                phone_number:
  *                  type: string
  *                  description: 교수 핸드폰 번호
@@ -75,17 +62,65 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
         else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
-            const [subject_professor_info] = await db.promise().query(`select s.sub_code, s.semester, s.name subject_name, s.credit, s.time, s.class, p.phone_number, p.email, p.name professor_name
+            const [subject_professor_info] = await db.promise().query(`select s.credit, s.classification, p.phone_number, p.email, p.name professor_name
                 from subject s join professortable p on s.professor_id = p.id
                 where s.sub_code = ? and s.semester = ?`, [sub_code, semester]
             );
-            return res.status(201).send(subject_professor_info);
+            console.log(subject_professor_info[0]);
+            return res.status(201).send(subject_professor_info[0]);
         }
     }
     catch(err){
         throw err;
     }
 })
+
+/**
+ * @openapi
+ * /syllabus/{subjectID}/{semesterID}/list:
+ *  parameters:
+ *    - name: subjectID
+ *      in: path
+ *      required: true
+ *      description: 과목 코드
+ *      schema:
+ *        type: string
+ *    - name: semesterID
+ *      in: path
+ *      required: true
+ *      description: 년도-학기
+ *      schema:
+ *        type: string
+ *  get:
+ *    summary: 강의계획서 목록
+ *    description: 강의계획서 목록
+ *    security:
+ *      - CookieAuth: []
+ *    responses:
+ *      '201':
+ *        description: 강의계획서 목록
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                sub_code:
+ *                  type: string
+ *                  description: 과목코드
+ *                sub_name:
+ *                  type: string
+ *                  description: 과목명
+ *                time:
+ *                  type: string
+ *                  description: 수업 시간
+ *                class:
+ *                  type: string
+ *                  description: 교실
+ *      '401':
+ *        description: 잘못된 access 토큰
+ *      '419':
+ *        description: access 토큰 만료
+ */
 
 router.get('/:subjectID/:semesterID/list', async (req, res) => {
     try{
@@ -95,11 +130,12 @@ router.get('/:subjectID/:semesterID/list', async (req, res) => {
         } else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
-            const [syllabusList] = await db.promise().query(`select sub_code, name sub_name, time, class from subject
-                where sub_code = ? and semester = ?`, [sub_code, semester]
+            const [syllabusList] = await db.promise().query(`select s.sub_code, s.name sub_name, s.time, s.class
+                from syllabus sy left join subject s on sy.sub_code = s.sub_code and sy.semester = s.semester
+                where s.sub_code = ? and s.semester = ?`, [sub_code, semester]
             );
             const result = {
-                "syllabusList":syllabusList[0]
+                ...syllabusList[0]
             }
             return res.status(201).send(result);
         }
@@ -153,63 +189,27 @@ router.get('/:subjectID/:semesterID/list', async (req, res) => {
  *                evaluation_method_ratio:
  *                  type: string
  *                  description: 평가방법비율
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                semester:
- *                  type: string
- *                  description: 학기
- *                subject_name:
- *                  type: string
- *                  description: 과목명
  *                credit:
  *                  type: integer
  *                  description: 학점
- *                time:
- *                  type: string
- *                  description: 강의시간
- *                class:
- *                  type: string
- *                  description: 강의실
  *                phone_number:
  *                  type: string
  *                  description: 교수 핸드폰 번호
  *                email:
  *                  type: string
  *                  description: 교수 이메일
+ *                classification:
+ *                  type: string
+ *                  description: 이수구분
  *                professor_name:
  *                  type: string
  *                  description: 교수명
- *                교재:
- *                  type: array
- *                  description: 교재 목록
- *                  items:
- *                    type: object
- *                    properties:
- *                      title:
- *                        type: string
- *                        description: 제목
- *                      author:
- *                        type: string
- *                        description: 저자
- *                      publisher:
- *                        type: string
- *                        description: 출판사
- *                      publish_year:
- *                        type: string
- *                        description: 출판일
- *                강의 일정 및 내용:
- *                  type: array
- *                  description: 강의 일정 및 내용
- *                  items:
- *                    type: object
- *                    properties:
- *                      week:
- *                        type: string
- *                        description: 주차
- *                      content:
- *                        type: string
- *                        description: 주차별 설명
+ *                textbook:
+ *                  type: string
+ *                  description: 교재 정보
+ *                lec_schedule:
+ *                  type: string
+ *                  description: 강의 내용
  *      '201':
  *        description: 교수일 때 해당 강의계획서 조회
  *        content:
@@ -232,63 +232,27 @@ router.get('/:subjectID/:semesterID/list', async (req, res) => {
  *                evaluation_method_ratio:
  *                  type: string
  *                  description: 평가방법비율
- *                sub_code:
- *                  type: string
- *                  description: 과목코드
- *                semester:
- *                  type: string
- *                  description: 학기
- *                subject_name:
- *                  type: string
- *                  description: 과목명
  *                credit:
  *                  type: integer
  *                  description: 학점
- *                time:
- *                  type: string
- *                  description: 강의시간
- *                class:
- *                  type: string
- *                  description: 강의실
  *                phone_number:
  *                  type: string
  *                  description: 교수 핸드폰 번호
  *                email:
  *                  type: string
  *                  description: 교수 이메일
+ *                classification:
+ *                  type: string
+ *                  description: 이수구분
  *                professor_name:
  *                  type: string
  *                  description: 교수명
- *                교재:
- *                  type: array
- *                  description: 교재 목록
- *                  items:
- *                    type: object
- *                    properties:
- *                      title:
- *                        type: string
- *                        description: 제목
- *                      author:
- *                        type: string
- *                        description: 저자
- *                      publisher:
- *                        type: string
- *                        description: 출판사
- *                      publish_year:
- *                        type: string
- *                        description: 출판일
- *                강의 일정 및 내용:
- *                  type: array
- *                  description: 강의 일정 및 내용
- *                  items:
- *                    type: object
- *                    properties:
- *                      week:
- *                        type: string
- *                        description: 주차
- *                      content:
- *                        type: string
- *                        description: 주차별 설명
+ *                textbook:
+ *                  type: string
+ *                  description: 교재 정보
+ *                lec_schedule:
+ *                  type: string
+ *                  description: 강의 내용
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -304,28 +268,19 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             const [syllabus] = await db.promise().query(`select s.id , s.assistant_name, s.course_sumary, s.course_performance, s.operation_type, s.evaluation_method_ratio,
-                sub.sub_code, sub.semester, sub.name subject_name, sub.credit, sub.time, sub.class, p.phone_number, p.email, p.name professor_name
+                sub.credit, p.phone_number, p.email, sub.classification, p.name professor_name, s.textbook, s.lec_schedule
                 from syllabus s join subject sub on s.semester = sub.semester and s.sub_code = sub.sub_code
                 join professortable p on sub.professor_id = p.id
                 where sub.sub_code = ? and sub.semester = ?`, [sub_code, semester]
             );
-            const [textbook] = await db.promise().query(`select text.title, text.author, text.publisher, text.publish_year
-                from syllabus_textbook syltext join textbook text on syltext.textbook_id = text.id
-                where syltext.syllabus_id = ?`, [syllabus[0].id]
-            );
-            const [lec_schedule] = await db.promise().query(`select lec.week, lec.content
-                from syllabus syl join lecture_schedule lec on syl.id = lec.syllabus_id
-                where syl.id = ?`, [syllabus[0].id]
-            );
             const total_result = {
-                ...syllabus[0],
-                '교재': textbook,
-                '강의 일정 및 내용':lec_schedule
+                ...syllabus[0]
             };
             const {id, ...result} = total_result;
             if(token.author == 1){
                 return res.status(200).send(result);
             } else{
+                console.log(result);
                 return res.status(201).send(result);
             }
         }
@@ -362,51 +317,27 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *          schema:
  *            type: object
  *            properties:
- *              assistant_name:
+ *              ta_name:
  *                type: string
  *                description: 담당 조교명
- *              course_sumary:
+ *              intro:
  *                type: string
  *                description: 교과목 개요
- *              course_performance:
+ *              achiev:
  *                type: string
  *                description: 교과목 학습성과
- *              operation_type:
+ *              rule:
  *                type: string
  *                description: 강의운영방식
- *              evaluation_method_ratio:
+ *              ratio:
  *                type: string
  *                description: 평가방법비율
- *              textbook:
- *                type: array
- *                description: 교재
- *                items:
- *                  type: object
- *                  properties:
- *                    title:
- *                      type: string
- *                      description: 제목
- *                    author:
- *                      type: string
- *                      description: 저자
- *                    publisher:
- *                      type: string
- *                      description: 출판사
- *                    publish_year:
- *                      type: string
- *                      description: 출판일
- *              lec_schedule:
- *                type: array
- *                description: 강의일정
- *                items:
- *                  type: object
- *                  properties:
- *                    week:
- *                      type: string
- *                      description: 주차
- *                    content:
- *                      type: string
- *                      description: 주차별 설명
+ *              book:
+ *                type: string
+ *                description: 교재 정보
+ *              schedule:
+ *                type: string
+ *                description: 강의 일정 정보
  *    responses:
  *      '201':
  *        description: 강의계획서 생성 성공
@@ -425,20 +356,17 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
         else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
-            const assistant_name = req.body.assistant_name;
-            const course_sumary = req.body.course_sumary;
-            const course_performance = req.body.course_performance;
-            const operation_type = req.body.operation_type;
-            const evaluation_method_ratio = req.body.evaluation_method_ratio;
-            const textbook = req.body.textbook;
-            const lecture_schedule = req.body.lecture_schedule;
+            const assistant_name = req.body.ta_name;
+            const course_sumary = req.body.intro;
+            const course_performance = req.body.achiev;
+            const operation_type = req.body.rule;
+            const evaluation_method_ratio = req.body.ratio;
+            const textbook = req.body.book;
+            const lecture_schedule = req.body.schedule;
 
-            db.promise().query(`insert into syllabus(sub_code, semester, assistant_name, course_sumary, course_performance, operation_type, evaluation_method_ratio)
-                values(?,?,?,?,?,?,?)`, [sub_code, semester, assistant_name, course_sumary, course_performance, operation_type, evaluation_method_ratio]
+            db.promise().query(`insert into syllabus(sub_code, semester, assistant_name, course_sumary, course_performance, operation_type, evaluation_method_ratio, textbook, lec_schedule)
+                values(?,?,?,?,?,?,?,?,?)`, [sub_code, semester, assistant_name, course_sumary, course_performance, operation_type, evaluation_method_ratio, textbook, lecture_schedule]
             );
-            const textbook_ids = await syllabus_function.select_textbook_ids(textbook);
-            const syllabus_id = await syllabus_function.select_syllabus_id(sub_code, semester);
-            syllabus_function.insert_schedule_and_syllabus_textbook(lecture_schedule, textbook_ids, syllabus_id);
             return res.sendStatus(201);
         }
     }
@@ -475,51 +403,27 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
  *          schema:
  *            type: object
  *            properties:
- *              assistant_name:
+ *              ta_name:
  *                type: string
  *                description: 담당 조교명
- *              course_sumary:
+ *              intro:
  *                type: string
  *                description: 교과목 개요
- *              course_performance:
+ *              achiev:
  *                type: string
  *                description: 교과목 학습성과
- *              operation_type:
+ *              rule:
  *                type: string
  *                description: 강의운영방식
- *              evaluation_method_ratio:
+ *              ratio:
  *                type: string
  *                description: 평가방법비율
- *              textbook:
- *                type: array
- *                description: 교재
- *                items:
- *                  type: object
- *                  properties:
- *                    title:
- *                      type: string
- *                      description: 제목
- *                    author:
- *                      type: string
- *                      description: 저자
- *                    publisher:
- *                      type: string
- *                      description: 출판사
- *                    publish_year:
- *                      type: string
- *                      description: 출판일
- *              lec_schedule:
- *                type: array
- *                description: 강의일정
- *                items:
- *                  type: object
- *                  properties:
- *                    week:
- *                      type: string
- *                      description: 주차
- *                    content:
- *                      type: string
- *                      description: 주차별 설명
+ *              book:
+ *                type: string
+ *                description: 교재 정보
+ *              schedule:
+ *                type: string
+ *                description: 강의 일정 정보
  *    responses:
  *      '201':
  *        description: 강의계획서 수정 성공
@@ -529,7 +433,7 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
  *        description: access 토큰 만료
  */
 
-router.post('/:subjectID/:semesterID/update', async(req, res) => {
+router.put('/:subjectID/:semesterID/update', async(req, res) => {
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
@@ -537,24 +441,17 @@ router.post('/:subjectID/:semesterID/update', async(req, res) => {
         } else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
-            const assistant_name = req.body.assistant_name;
-            const course_sumary = req.body.course_sumary;
-            const course_performance = req.body.course_performance;
-            const operation_type = req.body.operation_type;
-            const evaluation_method_ratio = req.body.evaluation_method_ratio;
-            const textbook = req.body.textbook;
-            const lecture_schedule = req.body.lecture_schedule;
+            const assistant_name = req.body.ta_name;
+            const course_sumary = req.body.intro;
+            const course_performance = req.body.achiev;
+            const operation_type = req.body.rule;
+            const evaluation_method_ratio = req.body.ratio;
+            const textbook = req.body.book;
+            const lecture_schedule = req.body.schedule;
 
-            db.promise().query(`update syllabus set assistant_name=?, course_sumary=?, course_performance=?, operation_type=?, evaluation_method_ratio=?
-                where sub_code=? and semester=?`, [assistant_name, course_sumary, course_performance, operation_type, evaluation_method_ratio, sub_code, semester]
+            db.promise().query(`update syllabus set assistant_name=?, course_sumary=?, course_performance=?, operation_type=?, evaluation_method_ratio=?, textbook=?, lec_schedule=?
+                where sub_code=? and semester=?`, [assistant_name, course_sumary, course_performance, operation_type, evaluation_method_ratio, textbook, lecture_schedule, sub_code, semester]
             );
-            const textbook_ids = await syllabus_function.select_textbook_ids(textbook);
-            const syllabus_id = await syllabus_function.select_syllabus_id(sub_code, semester);
-            
-            db.promise().query(`delete from syllabus_textbook where syllabus_id = ?`, [syllabus_id[0].id]);
-            db.promise().query(`delete from lecture_schedule where syllabus_id = ?`, [syllabus_id[0].id]);
-
-            syllabus_function.insert_schedule_and_syllabus_textbook(lecture_schedule, textbook_ids, syllabus_id);
             return res.sendStatus(201);
         }
     }
