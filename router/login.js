@@ -236,7 +236,7 @@ router.post('/', async (req, res) =>{
             res.cookie('accesstoken', accesstoken, {
                 httpOnly: true,
                 sameSite: 'none',
-
+                secure: true
             });
             const {author, ...info} = result[0];
             return res.status(200).send(info);
@@ -247,7 +247,7 @@ router.post('/', async (req, res) =>{
                 res.cookie('accesstoken', accesstoken, {
                     httpOnly: true,
                     sameSite: 'none',
-
+                    secure: true
                 });
                 const {author, ...info} = result2[0];
 

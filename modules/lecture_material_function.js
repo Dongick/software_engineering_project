@@ -24,8 +24,8 @@ module.exports = {
     select_lecture_materialid: async (semester, sub_code, lecture_materialid) =>{
         try{
             const [lecture_material_id] = await db.promise().query(`select id
-                from lecture_material where semester = ? and sub_code = ? order by updated_time limit ?,1`,
-                [semester,sub_code,lecture_materialid]
+                from lecture_material where semester = ? and sub_code = ? order by id limit ?,1`,
+                [semester, sub_code, lecture_materialid]
             );
             const result = lecture_material_id[0].id;
             return result;

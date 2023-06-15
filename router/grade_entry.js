@@ -35,21 +35,15 @@ const score_funciton = require('../modules/score_function');
  *              items:
  *                type: object
  *                properties:
- *                  semester:
- *                    type: string
- *                    description: 학기
- *                  sub_code:
- *                    type: string
- *                    description: 과목코드
- *                  sub_name:
- *                    type: string
- *                    description: 과목명
  *                  student_id:
  *                    type: integer
  *                    description: 학생 학번
  *                  student_name:
  *                    type: string
  *                    description: 학생 이름
+ *                  major:
+ *                    type: string
+ *                    description: 학과
  *                  grade:
  *                    type: string
  *                    description: 성적
@@ -61,16 +55,21 @@ const score_funciton = require('../modules/score_function');
 
 router.get('/:subjectID/:semesterID', async (req, res) =>{
     try{
+        console.log("1");
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
             return res.sendStatus(token);
         } else{
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
-            const [result] = await db.promise().query(`select s.semester, s.sub_code, s.name sub_name, e.student_id, st.name student_name, e.grade
+            const [board] = await db.promise().query(`select e.student_id, st.name student_name, st.major, e.grade
                 from enrollment e join studenttable st on e.student_id = st.id
-                join subject s on s.sub_code = e.sub_code where s.sub_code = ? and s.semester = ? order by st.id`, [sub_code, semester]
+                where e.sub_code = ? and e.semester = ? order by st.id`, [sub_code, semester]
             );
+            const result = {
+                "board": board
+            };
+            console.log(result);
             return res.status(201).send(result);
         }
     }
@@ -118,7 +117,7 @@ router.get('/:subjectID/:semesterID', async (req, res) =>{
  *                description: 성적
  *                items:
  *                  type: string
- *                  example: [A+, A, B+]
+ *                  example: [A+, A0, B+]
  *    responses:
  *      '201':
  *        description: 성적 입력 성공
@@ -130,6 +129,7 @@ router.get('/:subjectID/:semesterID', async (req, res) =>{
 
 router.post('/:subjectID/:semesterID', async (req, res) => {
     try{
+        console.log("good");
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
             return res.sendStatus(token);
@@ -138,8 +138,9 @@ router.post('/:subjectID/:semesterID', async (req, res) => {
             const semester = req.params.semesterID;
             const student_id = req.body.student_id;
             const grades = req.body.grade;
+            console.log(req.body);
             for(let i = 0; i < student_id.length; i++){
-                db.promise().query(`UPDATE enrollment SET grade = ? WHERE student_id = ? AND sub_code = ? AND semester = ?`, [grades[i], student_id[i], sub_code, semester]);
+                await db.promise().query(`UPDATE enrollment SET grade = ? WHERE student_id = ? AND sub_code = ? AND semester = ?`, [grades[i], student_id[i], sub_code, semester]);
                 let [result] = await db.promise().query(`select * from enrollment where student_id = ? and semester = ? and grade is null`, [student_id[i], semester]);
                 if(result.length == 0){
                     let [score] = await db.promise().query(`select e.grade, sum(s.credit) sum_credit from enrollment e join subject s

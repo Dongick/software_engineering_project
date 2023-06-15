@@ -3,19 +3,19 @@ module.exports = {
         switch(grade){
             case 'A+':
                 return 4.5;
-            case 'A':
+            case 'A0':
                 return 4.0;
             case 'B+':
                 return 3.5;
-            case 'B':
+            case 'B0':
                 return 3.0;
             case 'C+':
                 return 2.5;
-            case 'C':
+            case 'C0':
                 return 2.0;
             case 'D+':
                 return 1.5;
-            case 'D':
+            case 'D0':
                 return 1.0;
             case 'F':
                 return 0.0;

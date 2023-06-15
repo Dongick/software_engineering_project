@@ -31,7 +31,7 @@ module.exports = {
         try{
             const TimesArr = []
             for(const timeArr of times){
-                const weekday = timeArr[0];;
+                const weekday = timeArr[0];
                 const hoursStr = timeArr.slice(1);
                 const numbers = hoursStr.split(',');
                 for (const number of numbers) {

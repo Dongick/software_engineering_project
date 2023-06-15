@@ -6,7 +6,6 @@ const lecture_material_function = require('../modules/lecture_material_function'
 const multer = require('multer');
 const upload = multer();
 
-
 /**
  * @openapi 
  * /lecture_material/{subjectID}/{semesterID}/{lecture_materialID}/{fileID}/download:
@@ -106,7 +105,7 @@ router.get('/:subjectID/:semesterID/:lecture_materialID/:fileID/download', async
  *      description: 강의자료실 번호
  *      schema:
  *        type: integer
- *  get:
+ *  delete:
  *    summary: 강의자료실 삭제
  *    description: 강의자료실 삭제
  *    security:
@@ -120,7 +119,7 @@ router.get('/:subjectID/:semesterID/:lecture_materialID/:fileID/download', async
  *        description: access 토큰 만료
  */
 
-router.get('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res) =>{
+router.delete('/:subjectID/:semesterID/:lecture_materialID/delete', async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
@@ -295,7 +294,7 @@ router.get('/:subjectID/:semesterID/:lecture_materialID', async (req, res) => {
  *                      writer:
  *                        type: string
  *                        description: 작성자
- *                      updated_time:
+ *                      created_time:
  *                        type: string
  *                        format: date-time
  *                        description: 생성 날짜
@@ -329,7 +328,7 @@ router.get('/:subjectID/:semesterID/:lecture_materialID', async (req, res) => {
  *                      writer:
  *                        type: string
  *                        description: 작성자
- *                      updated_time:
+ *                      created_time:
  *                        type: string
  *                        format: date-time
  *                        description: 생성 날짜
@@ -356,21 +355,20 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             const sub_code = req.params.subjectID;
             const semester = req.params.semesterID;
             if(token.author == 1){
-                const [lecture_material] = await db.promise().query(`select row_number() over (order by l.updated_time) as id, l.title, l.writer, DATE_FORMAT(l.updated_time, '%Y-%m-%d') updated_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
+                const [lecture_material] = await db.promise().query(`select row_number() over (order by l.id) as id, l.title, l.writer, DATE_FORMAT(l.created_time, '%Y-%m-%d') created_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
                     from lecture_material l left join lecture_material_file lf on l.id = lf.lecture_material_id
                     join enrollment e on e.sub_code = l.sub_code and e.semester = l.semester
                     where e.student_id = ? and e.semester = ? and e.sub_code = ?
-                    group by l.id order by l.updated_time desc`, [token.id, semester, sub_code]
+                    group by l.id order by l.id desc`, [token.id, semester, sub_code]
                 );
-
                 const result = {
                     "lecture_material": lecture_material
                 }
                 return res.status(200).send(result);
             } else{
-                const [lecture_material] = await db.promise().query(`select row_number() over (order by l.updated_time) as id, l.title, l.writer, DATE_FORMAT(l.updated_time, '%Y-%m-%d') updated_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
+                const [lecture_material] = await db.promise().query(`select row_number() over (order by l.id) as id, l.title, l.writer, DATE_FORMAT(l.created_time, '%Y-%m-%d') created_time, l.view, JSON_ARRAYAGG(lf.file_name) AS file_names
                     from lecture_material l left join lecture_material_file lf on l.id = lf.lecture_material_id where l.semester = ? and l.sub_code = ? and l.professor_name = ?
-                    group by l.id order by l.updated_time desc`, [semester, sub_code, token.name]
+                    group by l.id order by l.id desc`, [semester, sub_code, token.name]
                 );
 
                 const result = {
@@ -438,7 +436,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *        description: access 토큰 만료
  */
 
-router.post('/:subjectID/:semesterID/:lecture_materialID/update', upload.array('files'), async (req, res) =>{
+router.put('/:subjectID/:semesterID/:lecture_materialID/update', upload.array('files'), async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
@@ -450,7 +448,7 @@ router.post('/:subjectID/:semesterID/:lecture_materialID/update', upload.array('
             const title = req.body.title;
             const content = req.body.content;
             const files = req.files;
-            const lecture_material_id = await lecture_material_function.select_lecture_materialid(semester,sub_code,lecture_materialid)
+            const lecture_material_id = await lecture_material_function.select_lecture_materialid(semester,sub_code,lecture_materialid);
             db.promise().query(`update lecture_material set title=?, content=? where id=?`, [title, content, lecture_material_id]);
             const file_check = await lecture_material_function.select_lecture_materialfile(lecture_material_id);
             if(file_check){
@@ -549,7 +547,5 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
         throw err;
     }
 })
-
-
 
 module.exports = router;

@@ -28,7 +28,6 @@ module.exports = {
         try{
             const [submit_id] = await db.promise().query(`select id from assignment_submit where assignment_id = ? and student_id = ?`, [assignment_id, userid]);
             if(submit_id.length > 0){
-                
                 const result = submit_id[0].id;
                 return result;
             } else{
@@ -52,7 +51,7 @@ module.exports = {
     insert_assignment_submitfile: async (assignment_submit_id, file_info) =>{
         try{
             const values = file_info.map(([name, data]) => [assignment_submit_id, name, data]);
-            await db.promise().query(`insert into assignment_submit_id(assignment_submit_id, file_name, file_data) values ?;`,[values]);
+            await db.promise().query(`insert into assignment_submit_file(assignment_submit_id, file_name, file_data) values ?;`,[values]);
         }
         catch(err){
             throw err;

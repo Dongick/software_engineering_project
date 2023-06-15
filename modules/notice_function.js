@@ -24,7 +24,7 @@ module.exports = {
     select_noticeid: async (semester, sub_code, noticeid) =>{
         try{
             const [notice_id] = await db.promise().query(`select id
-                from notice where semester = ? and sub_code = ? order by updated_time limit ?,1`,
+                from notice where semester = ? and sub_code = ? order by id limit ?,1`,
                 [semester,sub_code,noticeid]
             );
             const result = notice_id[0].id;

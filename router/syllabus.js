@@ -66,7 +66,6 @@ router.get('/:subjectID/:semesterID/create', async (req, res) =>{
                 from subject s join professortable p on s.professor_id = p.id
                 where s.sub_code = ? and s.semester = ?`, [sub_code, semester]
             );
-            console.log(subject_professor_info[0]);
             return res.status(201).send(subject_professor_info[0]);
         }
     }
@@ -391,7 +390,7 @@ router.post('/:subjectID/:semesterID/create', async (req, res) =>{
  *      description: 년도-학기
  *      schema:
  *        type: string
- *  post:
+ *  put:
  *    summary: 강의계획서 수정
  *    description: 강의계획서 수정
  *    security:
@@ -496,25 +495,29 @@ router.put('/:subjectID/:semesterID/update', async(req, res) => {
  *        content:
  *          application/json:
  *            schema:
- *              type: array
- *              items:
- *                type: object
- *                properties:
- *                  sub_code:
- *                    type: string
- *                    description: 과목코드
- *                  sub_name:
- *                    type: string
- *                    description: 과목이름
- *                  credit:
- *                    type: string
- *                    description: 학점
- *                  professor_name:
- *                    type: string
- *                    description: 교수이름
- *                  phone_number:
- *                    type: string
- *                    description: 교수 폰번호
+ *              type: object
+ *              properties:
+ *                syllabus:
+ *                  type: array
+ *                  description: 과목 정보
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      sub_code:
+ *                        type: string
+ *                        description: 과목코드
+ *                      sub_name:
+ *                        type: string
+ *                        description: 과목이름
+ *                      credit:
+ *                        type: string
+ *                        description: 학점
+ *                      professor_name:
+ *                        type: string
+ *                        description: 교수이름
+ *                      phone_number:
+ *                        type: string
+ *                        description: 교수 폰번호
  *      '401':
  *        description: 잘못된 access 토큰
  *      '419':
@@ -532,127 +535,144 @@ router.post('/', async (req, res) =>{
         const sub_name = req.body.sub_name;
         const major_area = req.body.major_area;
         const userid = token.id;
-        if(enrollment == '전체'){
-            if(sub_name.length == 0){
-                if(major_area.length == 0){
-                    const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                        from subject s join professortable p on s.professor_id = p.id
-                        where s.semester = ? and p.name = ?;`,[semester, professor_name]
-                    );
-                    return res.status(200).send(result);
-                } else{
-                    const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                        from subject s join professortable p on s.professor_id = p.id
-                        where s.semester = ? and p.name = ? and s.major_area = ?;`,
-                        [semester, professor_name, major_area]
-                    );
-                    return res.status(200).send(result);
-                }
-            } else if(professor_name.length == 0) {
-                if(major_area.length == 0){
-                    const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                        from subject s join professortable p on s.professor_id = p.id
-                        where s.semester = ? and s.name like ?;`,[semester, `%${sub_name}%`]
-                    );
-                    return res.status(200).send(result);
-                } else{
-                    const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                        from subject s join professortable p on s.professor_id = p.id
-                        where s.semester = ? and s.name = ? and s.major_area = ?;`,
-                        [semester, `%${sub_name}%`, major_area]
-                    );
-                    return res.status(200).send(result);
-                }
-            } else{
-                if(major_area.length == 0){
-                    const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                        from subject s join professortable p on s.professor_id = p.id
-                        where s.semester = ? and p.name = ? and s.name like ?;`,[semester, professor_name, `%${sub_name}%`]
-                    );
-                    return res.status(200).send(result);
-                } else{
-                    const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                        from subject s join professortable p on s.professor_id = p.id
-                        where s.semester = ? and p.name = ? and s.name = ? and s.major_area = ?;`,
-                        [semester, professor_name, `%${sub_name}%`, major_area]
-                    );
-                    return res.status(200).send(result);
-                }
-            }
-        } else{
-            if(sub_name.length == 0){
-                if(professor_name.length == 0){
+        const result = {};
+        if(token.author == 1){
+            if(enrollment == '전체'){
+                if(sub_name.length == 0){
                     if(major_area.length == 0){
-                        const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                            from professortable p join subject s on p.id = s.professor_id
-                            join enrollment e on s.sub_code = e.sub_code
-                            where e.student_id = ? and s.semester = ?;`,[userid, semester]
+                        const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                            from subject s join professortable p on s.professor_id = p.id
+                            where s.semester = ? and p.name = ?`,[semester, professor_name]
                         );
+                        result.syllabus = syllabus;
                         return res.status(200).send(result);
                     } else{
-                        const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                            from professortable p join subject s on p.id = s.professor_id
-                            join enrollment e on s.sub_code = e.sub_code
-                            where e.student_id = ? and s.semester = ? and s.major_area = ?;`,
-                            [userid, semester, major_area]
+                        const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                            from subject s join professortable p on s.professor_id = p.id
+                            where s.semester = ? and p.name = ? and s.major_area = ?`,
+                            [semester, professor_name, major_area]
                         );
+                        result.syllabus = syllabus;
+                        return res.status(200).send(result);
+                    }
+                } else if(professor_name.length == 0) {
+                    if(major_area.length == 0){
+                        const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                            from subject s join professortable p on s.professor_id = p.id
+                            where s.semester = ? and s.name like ?`,[semester, `%${sub_name}%`]
+                        );
+                        result.syllabus = syllabus;
+                        return res.status(200).send(result);
+                    } else{
+                        const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                            from subject s join professortable p on s.professor_id = p.id
+                            where s.semester = ? and s.name = ? and s.major_area = ?`,
+                            [semester, `%${sub_name}%`, major_area]
+                        );
+                        result.syllabus = syllabus;
                         return res.status(200).send(result);
                     }
                 } else{
                     if(major_area.length == 0){
-                        const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                            from professortable p join subject s on p.id = s.professor_id
-                            join enrollment e on s.sub_code = e.sub_code
-                            where e.student_id = ? and s.semester = ? and p.name = ?;`,
-                            [userid, semester, professor_name]
+                        const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                            from subject s join professortable p on s.professor_id = p.id
+                            where s.semester = ? and p.name = ? and s.name like ?`,[semester, professor_name, `%${sub_name}%`]
                         );
+                        result.syllabus = syllabus;
                         return res.status(200).send(result);
                     } else{
-                        const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                            from professortable p join subject s on p.id = s.professor_id
-                            join enrollment e on s.sub_code = e.sub_code
-                            where e.student_id = ? and s.semester = ? and s.major_area = ? and p.name = ?;`,
-                            [userid, semester, major_area, professor_name]
+                        const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                            from subject s join professortable p on s.professor_id = p.id
+                            where s.semester = ? and p.name = ? and s.name = ? and s.major_area = ?`,
+                            [semester, professor_name, `%${sub_name}%`, major_area]
                         );
+                        result.syllabus = syllabus;
                         return res.status(200).send(result);
                     }
                 }
             } else{
-                if(professor_name.length == 0){
-                    if(major_area.length == 0){
-                        const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                            from professortable p join subject s on p.id = s.professor_id
-                            join enrollment e on s.sub_code = e.sub_code
-                            where e.student_id = ? and s.semester = ? and s.name = ?;`,
-                            [userid, semester, `%${sub_name}%`]
-                        );
-                        return res.status(200).send(result);
+                if(sub_name.length == 0){
+                    if(professor_name.length == 0){
+                        if(major_area.length == 0){
+                            const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                                from professortable p join subject s on p.id = s.professor_id
+                                join enrollment e on s.sub_code = e.sub_code
+                                where e.student_id = ? and s.semester = ?`,[userid, semester]
+                            );
+                            result.syllabus = syllabus;
+                            return res.status(200).send(result);
+                        } else{
+                            const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                                from professortable p join subject s on p.id = s.professor_id
+                                join enrollment e on s.sub_code = e.sub_code
+                                where e.student_id = ? and s.semester = ? and s.major_area = ?`,
+                                [userid, semester, major_area]
+                            );
+                            result.syllabus = syllabus;
+                            return res.status(200).send(result);
+                        }
                     } else{
-                        const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                            from professortable p join subject s on p.id = s.professor_id
-                            join enrollment e on s.sub_code = e.sub_code
-                            where e.student_id = ? and s.semester = ? and s.name = ? and s.major_area = ?;`,
-                            [userid, semester, `%${sub_name}%`, major_area]
-                        );
-                        return res.status(200).send(result);
+                        if(major_area.length == 0){
+                            const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                                from professortable p join subject s on p.id = s.professor_id
+                                join enrollment e on s.sub_code = e.sub_code
+                                where e.student_id = ? and s.semester = ? and p.name = ?`,
+                                [userid, semester, professor_name]
+                            );
+                            result.syllabus = syllabus;
+                            return res.status(200).send(result);
+                        } else{
+                            const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                                from professortable p join subject s on p.id = s.professor_id
+                                join enrollment e on s.sub_code = e.sub_code
+                                where e.student_id = ? and s.semester = ? and s.major_area = ? and p.name = ?`,
+                                [userid, semester, major_area, professor_name]
+                            );
+                            result.syllabus = syllabus;
+                            return res.status(200).send(result);
+                        }
                     }
                 } else{
-                    if(major_area.length == 0){
-                        const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                            from professortable p join subject s on p.id = s.professor_id
-                            join enrollment e on s.sub_code = e.sub_code
-                            where e.student_id = ? and s.semester = ? and s.name = ? and p.name = ?;`,
-                            [userid, semester, `%${sub_name}%`, professor_name]
-                        );
-                        return res.status(200).send(result);
+                    if(professor_name.length == 0){
+                        if(major_area.length == 0){
+                            const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                                from professortable p join subject s on p.id = s.professor_id
+                                join enrollment e on s.sub_code = e.sub_code
+                                where e.student_id = ? and s.semester = ? and s.name = ?`,
+                                [userid, semester, `%${sub_name}%`]
+                            );
+                            result.syllabus = syllabus;
+                            return res.status(200).send(result);
+                        } else{
+                            const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                                from professortable p join subject s on p.id = s.professor_id
+                                join enrollment e on s.sub_code = e.sub_code
+                                where e.student_id = ? and s.semester = ? and s.name = ? and s.major_area = ?`,
+                                [userid, semester, `%${sub_name}%`, major_area]
+                            );
+                            result.syllabus = syllabus;
+                            return res.status(200).send(result);
+                        }
                     } else{
-                        const [result] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
-                            from professortable p join subject s on p.id = s.professor_id
-                            join enrollment e on s.sub_code = e.sub_code
-                            where e.student_id = ? and s.semester = ? and s.name = ? and s.major_area = ? and p.name = ?;`,
-                            [userid, semester, `%${sub_name}%`, major_area, professor_name]
-                        );
-                        return res.status(200).send(result);
+                        if(major_area.length == 0){
+                            const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                                from professortable p join subject s on p.id = s.professor_id
+                                join enrollment e on s.sub_code = e.sub_code
+                                where e.student_id = ? and s.semester = ? and s.name = ? and p.name = ?`,
+                                [userid, semester, `%${sub_name}%`, professor_name]
+                            );
+                            result.syllabus = syllabus;
+                            return res.status(200).send(result);
+                        } else{
+                            const [syllabus] = await db.promise().query(`select s.sub_code,s.name sub_name,s.classification,s.credit,p.name professor_name,p.phone_number
+                                from professortable p join subject s on p.id = s.professor_id
+                                join enrollment e on s.sub_code = e.sub_code
+                                where e.student_id = ? and s.semester = ? and s.name = ? and s.major_area = ? and p.name = ?`,
+                                [userid, semester, `%${sub_name}%`, major_area, professor_name]
+                            );
+                            result.syllabus = syllabus;
+                            return res.status(200).send(result);
+                        }
                     }
                 }
             }

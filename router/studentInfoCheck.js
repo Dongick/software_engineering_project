@@ -125,7 +125,7 @@ router.post('/', async (req, res) => {
             if(major){
                 if(name){
                     const [studentInfo] = await db.promise().query(`select name, major, email , phone_number from studenttable
-                        where major = ? and name = ?`, [major, name]
+                        where major = ? and name like ?`, [major, `%${name}%`]
                     );
                     result.studentInfo = studentInfo;
                 } else{
@@ -136,7 +136,7 @@ router.post('/', async (req, res) => {
                 }
             } else{
                 const [studentInfo] = await db.promise().query(`select name, major, email , phone_number from studenttable
-                    where name = ?`, [name]
+                    where name like ?`, [`%${name}%`]
                 );
                 result.studentInfo = studentInfo;
             }

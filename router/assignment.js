@@ -37,7 +37,7 @@ const upload = multer();
  *    - name: authorID
  *      in: path
  *      required: true
- *      description: 과제 OR 제출 파일 권한(과제 파일 -> 1, 제출 파일 -> 2)
+ *      description: 과제 OR 제출 파일 (제출 파일 -> 2, 과제 파일 -> 학생 학번)
  *      schema:
  *        type: integer
  *  get:
@@ -72,25 +72,34 @@ router.get('/:subjectID/:semesterID/:assignmentID/:fileID/:authorID/download', a
             const assignmentid = req.params.assignmentID - 1;
             const file_name = req.params.fileID;
             const author = req.params.authorID;
+            res.setHeader('Content-Disposition', `attachment; filename="${file_name}"`);
+            res.setHeader('Content-Type', 'application/octet-stream');
+            
             const assignment_id = await assignment_function.select_assignmentid(semester, sub_code, assignmentid);
-            if(author == 1){
-                const [file_data] = await db.promise().query(`select asf.file_data
-                    from assignment_submit_file asf join assignment_submit asu on asf.assignment_submit_id = asu.id 
-                    join assignment a on a.id = asu.assignment_id where asu.assignment_id = ? and asf.file_name = ?`, [assignment_id, file_name]
-                );
-                if(file_data.length > 0){
-                    const fileData = file_data[0].file_data;
-                    res.setHeader('Content-Disposition', `attachment; filename="${file_name}"`);
-                    res.setHeader('Content-Type', 'application/octet-stream');
-    
-                    return res.status(200).send(fileData);
-                }
-            } else if(author == 2){
+            if(author == 2){
                 const [file_data] = await db.promise().query(`select file_data from assignment_file where assignment_id = ? and file_name = ?`, [assignment_id, file_name]);
                 if(file_data.length > 0){
                     const fileData = file_data[0].file_data;
-                    res.setHeader('Content-Disposition', `attachment; filename="${file_name}"`);
-                    res.setHeader('Content-Type', 'application/octet-stream');
+    
+                    return res.status(200).send(fileData);
+                }
+            } else if(author == 1){
+                const [file_data] = await db.promise().query(`select asf.file_data
+                    from assignment_submit_file asf join assignment_submit asu on asf.assignment_submit_id = asu.id 
+                    join assignment a on a.id = asu.assignment_id where asu.assignment_id = ? and asf.file_name = ? and asu.student_id = ?`, [assignment_id, file_name, token.id]
+                );
+                if(file_data.length > 0){
+                    const fileData = file_data[0].file_data;
+    
+                    return res.status(200).send(fileData);
+                }
+            }else{
+                const [file_data] = await db.promise().query(`select asf.file_data
+                    from assignment_submit_file asf join assignment_submit asu on asf.assignment_submit_id = asu.id 
+                    join assignment a on a.id = asu.assignment_id where asu.assignment_id = ? and asf.file_name = ? and asu.student_id = ?`, [assignment_id, file_name, author]
+                );
+                if(file_data.length > 0){
+                    const fileData = file_data[0].file_data;
     
                     return res.status(200).send(fileData);
                 }
@@ -124,7 +133,7 @@ router.get('/:subjectID/:semesterID/:assignmentID/:fileID/:authorID/download', a
  *      description: 과제 번호
  *      schema:
  *        type: integer
- *  get:
+ *  delete:
  *    summary: 해당 과제 삭제 or 제출한 과제 삭제
  *    description: 해당 과제 삭제 or 제출한 과제 삭제
  *    security:
@@ -140,7 +149,7 @@ router.get('/:subjectID/:semesterID/:assignmentID/:fileID/:authorID/download', a
  *        description: access 토큰 만료
  */
 
-router.get('/:subjectID/:semesterID/:assignmentID/delete', async (req, res) =>{
+router.delete('/:subjectID/:semesterID/:assignmentID/delete', async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
@@ -152,7 +161,7 @@ router.get('/:subjectID/:semesterID/:assignmentID/delete', async (req, res) =>{
 
             const assignment_id = await assignment_function.select_assignmentid(semester, sub_code, assignmentid);
             if(token.author == 1){
-                const assignment_submit_id = assignment_function.select_assignment_submitid(assignment_id, token.id);
+                const assignment_submit_id = await assignment_function.select_assignment_submitid(assignment_id, token.id);
                 db.query(`delete from assignment_submit where id = ?`, [assignment_submit_id]);
                 return res.sendStatus(200);
             } else{
@@ -287,7 +296,6 @@ router.get('/:subjectID/:semesterID/:assignmentID', async (req, res) => {
 
             if(token.author == 1){
                 const assignment_submit_id = await assignment_function.select_assignment_submitid(assignment_id, userid);
-                console.log(assignment_submit_id);
                 if(assignment_submit_id){
                     const [assignment_submit] = await db.promise().query(`select asu.title, asu.content, JSON_ARRAYAGG(asf.file_name) AS file_names
                         from assignment_submit asu left join assignment_submit_file asf on asu.id = asf.assignment_submit_id where asu.id = ?`, [assignment_submit_id]
@@ -401,7 +409,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
             const semester = req.params.semesterID;
             if(token.author == 1){
                 const [assignment] = await db.promise().query(`select row_number() over (order by a.id) as id, a.title, DATE_FORMAT(a.start_date, '%Y-%m-%d %H:%i:%s') start_date, DATE_FORMAT(a.due_date, '%Y-%m-%d %H:%i:%s') due_date, 
-                    case when s.id is null then 'Not Submitted' else 'Submitted' end as submit_check
+                    case when s.id is null then "미제출" else "제출" end as submit_check
                     from assignment a left join assignment_submit s on a.id = s.assignment_id and s.student_id = ?
                     where a.sub_code = ? and a.semester = ? order by a.id desc`,
                     [token.id, sub_code, semester]
@@ -449,7 +457,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *      description: 과제 번호
  *      schema:
  *        type: integer
- *  post:
+ *  put:
  *    summary: 과제 수정 or 제출한 과제 수정
  *    description: 과제 수정 or 제출한 과제 수정
  *    security:
@@ -471,6 +479,10 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *                type: string
  *                format: binary
  *                description: 파일
+ *              due_date:
+ *                type: string
+ *                format: string
+ *                description: 마감일
  *    responses:
  *      '200':
  *        description: 학생일 때 제출한 과제 수정
@@ -482,7 +494,7 @@ router.get('/:subjectID/:semesterID', async (req, res) => {
  *        description: access 토큰 만료
  */
 
-router.post('/:subjectID/:semesterID/:assignmentID/update', upload.array('files'), async (req, res) =>{
+router.put('/:subjectID/:semesterID/:assignmentID/update', upload.array('files'), async (req, res) =>{
     try{
         const token = jwt.verify(req.cookies['accesstoken']);
         if (Number.isInteger(token)){
@@ -510,9 +522,8 @@ router.post('/:subjectID/:semesterID/:assignmentID/update', upload.array('files'
                 }
                 return res.sendStatus(200);
             } else{
-                const start_date = req.body.start_date;
                 const due_date = req.body.due_date;
-                db.promise().query(`update assignment set title=?, content=?, start_date = ?, due_date = ? where id=?`, [title, content, start_date, due_date, assignment_id]);
+                db.promise().query(`update assignment set title=?, content=?, due_date = ? where id=?`, [title, content, due_date, assignment_id]);
                 const [file_check] = await db.promise().query(`select JSON_ARRAYAGG(file_name) as file_name
                     from assignment_file where assignment_id = ?`, [assignment_id]
                 );
@@ -593,25 +604,27 @@ router.post('/:subjectID/:semesterID/:assignmentID/submit', upload.array('files'
         if (Number.isInteger(token)){
             res.sendStatus(token);
         } else{
-            const sub_code = req.params.subjectID;
-            const semester = req.params.semesterID;
-            const assignmentid = req.params.assignmentID - 1;
-            const title = req.body.title;
-            const content = req.body.content;
-            const files = req.files;
-            const userid = token.id;
+            if(token.author == 1){
+                const sub_code = req.params.subjectID;
+                const semester = req.params.semesterID;
+                const assignmentid = req.params.assignmentID - 1;
+                const title = req.body.title;
+                const content = req.body.content;
+                const files = req.files;
+                const userid = token.id;
 
-            const assignment_id = await assignment_function.select_assignmentid(semester, sub_code, assignmentid);
+                const assignment_id = await assignment_function.select_assignmentid(semester, sub_code, assignmentid);
 
-            await db.promise().query(`insert into assignment_submit(assignment_id,student_id,title,content)
-                values (?,?,?,?);`, [assignment_id,userid,title,content]
-            );
-            if(files.length > 0){
-                const file_info = files.map(file => [file.originalname, file.buffer]);
-                const assignment_submit_id = await assignment_function.select_assignment_submitid(assignment_id, userid);
-                assignment_function.insert_assignment_submitfile(assignment_submit_id, file_info);
+                await db.promise().query(`insert into assignment_submit(assignment_id,student_id,title,content)
+                    values (?,?,?,?);`, [assignment_id,userid,title,content]
+                );
+                if(files.length > 0){
+                    const file_info = files.map(file => [file.originalname, file.buffer]);
+                    const assignment_submit_id = await assignment_function.select_assignment_submitid(assignment_id, userid);
+                    assignment_function.insert_assignment_submitfile(assignment_submit_id, file_info);
+                }
+                return res.sendStatus(200);
             }
-            return res.sendStatus(200);
         }
     }
     catch(err){
@@ -653,6 +666,9 @@ router.post('/:subjectID/:semesterID/:assignmentID/submit', upload.array('files'
  *              content:
  *                type: string
  *                description: 본문
+ *              due_date:
+ *                type: string
+ *                description: 마감일
  *              files:
  *                type: array
  *                items:
@@ -674,25 +690,26 @@ router.post('/:subjectID/:semesterID/create', upload.array('files'), async (req,
         if (Number.isInteger(token)){
             res.sendStatus(token);
         } else{
-            const sub_code = req.params.subjectID;
-            const semester = req.params.semesterID;
-            const title = req.body.title;
-            const content = req.body.content;
-            const start_date = req.body.start_date;
-            const due_date = req.body.due_date;
-            const files = req.files;
-            await db.promise().query(`insert into 
-                assignment(sub_code,semester,title,content,start_date,due_date)
-                values (?,?,?,?,?,?);`,
-                [sub_code,semester,title,content,start_date,due_date]
-            );
-            if(files.length > 0){
-                const file_info = files.map(file => [file.originalname, file.buffer]);
-                const [assignmentid] = await db.promise().query(`select id from assignment order by id desc limit 1`);
-                const assignment_id = assignmentid[0].id
-                assignment_function.insert_assignmentfile(assignment_id, file_info);
+            if(token.author == 2){
+                const sub_code = req.params.subjectID;
+                const semester = req.params.semesterID;
+                const title = req.body.title;
+                const content = req.body.content;
+                const due_date = req.body.due_date;
+                const files = req.files;
+                await db.promise().query(`insert into 
+                    assignment(sub_code,semester,title,content,due_date)
+                    values (?,?,?,?,?);`,
+                    [sub_code,semester,title,content,due_date]
+                );
+                if(files.length > 0){
+                    const file_info = files.map(file => [file.originalname, file.buffer]);
+                    const [assignmentid] = await db.promise().query(`select id from assignment order by id desc limit 1`);
+                    const assignment_id = assignmentid[0].id
+                    assignment_function.insert_assignmentfile(assignment_id, file_info);
+                }
+                return res.sendStatus(201);
             }
-            return res.sendStatus(201);
         }
     }
     catch(err){
